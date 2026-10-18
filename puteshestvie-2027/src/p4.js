@@ -63,6 +63,9 @@ const TABS=[["route","Маршрут"],["places","Места"],["hikes","Пох�
 function go(id){TABS.forEach(([k])=>{$("#t-"+k).hidden=k!==id});document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.t===id));try{history.replaceState(null,"","#"+id)}catch(e){}scrollTo(0,0);LS.set("tab",id)}
 function tabs(){$("#tabs").innerHTML=TABS.map(([k,v])=>`<button role="tab" type="button" data-t="${k}" aria-selected="false">${v}</button>`).join("");$("#tabs").onclick=e=>{const b=e.target.closest("button");if(b)go(b.dataset.t)}}
 /* ---------- маршрут ---------- */
+function dayPlan(x){
+ const d=DAYS[x.id];if(!d)return "";
+ return `<details class="plan"><summary>По дням</summary><ol class="pl">${d.map(([o,l,t,s])=>{const lb=l>1?dm(addDays(x.from,o))+"–"+dm(addDays(x.from,o+l-1)):dm(addDays(x.from,o));return `<li><b>${lb}. ${esc(t)}</b><div>${esc(s)}</div></li>`}).join("")}</ol></details>`}
 function stagePlan(x){
  const DM={"января":0,"февраля":1,"марта":2,"апреля":3,"мая":4,"июня":5,"июля":6,"августа":7};
  const a=addDays(x.from,0),b=addDays(x.from,x.n);
@@ -73,10 +76,10 @@ function stagePlan(x){
  return `<details class="plan"><summary>План по шагам</summary>${legs.length?`<h4>Как добраться</h4><ol class="legs">${legs.map(f=>`<li><b>${esc(f[0])}</b> <span>${esc(f[1])}</span><div class="mute">${esc(f[2])}${f[3]?" · "+esc(f[3]):""}</div>${f[6]?`<div class="note">${esc(f[6])}</div>`:""}</li>`).join("")}</ol>`:""}${cities.length?`<h4>Что делать</h4>${cities.map(([c,l],i)=>`<h5 class="stp"><span>Шаг ${i+1}.</span> <span>${esc(c)}</span></h5><ol class="pl">${l.map(p=>`<li><b>${esc(p[4])}</b><div>${esc(p[5])}</div><div class="mute">${esc(p[6])}</div></li>`).join("")}</ol>`).join("")}`:""}</details>`}
 function renderRoute(){
  const deadlines=[["как только откроются продажи, обычно в начале года","Билеты на Мачу-Пикчу и поезд до Агуас-Кальентес"],["февраль — март","Перелёты Тель-Авив — Лос-Анджелес, Сан-Франциско — Буэнос-Айрес, Кито — Ереван; отели в Биг-Суре на 29–31 мая; прививки"],["апрель","Universal Studios, Алькатрас, Йосемити, парковка Muir Woods"],["апрель — май","Тур Туписа — Уюни, ночь в соляном отеле, Galápagos: билеты Кито — острова"],["за 3–4 недели","Столик в Don Julio, милонга, концерты в Сальте, термы Папальтачта"],["за месяц","Страховка, проверка границы в Вильясоне, сборы и форма Галапагосов (48–72 часа до рейса)"]];
- $("#t-route").innerHTML=`<div><h2>Маршрут</h2><p class="lead">94 дня: 20 мая — 22 августа. Лос-Анджелес три дня (два дня Universal и один на прогулки), потом неделя по побережью до Сан-Франциско и две недели у тёти. Три перелёта через океан и один через континент, остальное по земле. Перу вставлено в свободные 12 дней между Боливией и Эквадором, его можно отключить на вкладке «Бюджет».</p></div>`+
+ $("#t-route").innerHTML=`<div><h2>Маршрут</h2><p class="lead">94 дня: 20 мая — 22 августа. Лос-Анджелес четыре ночи (сначала прогулки, потом два дня Universal), потом шесть дней по побережью до Сан-Франциско и две недели у тёти. Три перелёта через океан и один через континент, остальное по земле. Перу вставлено в свободные 12 дней между Боливией и Эквадором, его можно отключить на вкладке «Бюджет».</p></div>`+
  ST.map(x=>{const cnt=P.filter(p=>p[0]===x.c&&(x.id==="back"?false:true)&&(x.c!=="ar"&&x.c!=="us"?true:(x.c==="us"?p[1]===x.id:true))).length;
  const cn=x.id==="back"?0:cnt;
- return `<div class="stage" id="st-${x.id}" style="--c:${CC[x.c][1]}"><div class="row"><h3>${esc(x.name)}</h3><span class="pill">${range(x.from,x.n)} · ${x.n} ${x.free?"дн.":"ноч."}</span></div><p>${esc(x.sum)}</p>${stagePlan(x)}${cn?`<div><button class="btn" type="button" data-pl="${x.id}">Места этапа (${cn})</button></div>`:""}</div>`}).join("")+
+ return `<div class="stage" id="st-${x.id}" style="--c:${CC[x.c][1]}"><div class="row"><h3>${esc(x.name)}</h3><span class="pill">${range(x.from,x.n)} · ${x.n} ${x.free?"дн.":"ноч."}</span></div><p>${esc(x.sum)}</p>${dayPlan(x)}${stagePlan(x)}${cn?`<div><button class="btn" type="button" data-pl="${x.id}">Места этапа (${cn})</button></div>`:""}</div>`}).join("")+
  `<div><h2>Когда что бронировать</h2></div><div class="tw"><table><thead><tr><th>Срок</th><th>Что</th></tr></thead><tbody>${deadlines.map(d=>`<tr><td>${d[0]}</td><td>${d[1]}</td></tr>`).join("")}</tbody></table></div>`;
  $("#t-route").onclick=e=>{const b=e.target.closest("[data-pl]");if(!b)return;const x=stageOf(b.dataset.pl);PF.c=x.c;PF.st=(x.c==="us"?x.id:"");PF.t="";renderPlaces();go("places")}
 }
