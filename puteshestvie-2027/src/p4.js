@@ -37,9 +37,10 @@ function art(kind,seed){const r=rnd(kind+seed),c=SK[kind]||SK.mountain,id="g"+ha
  let s=`<svg viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(seed)}"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c[0]}"/><stop offset="1" stop-color="${c[1]}"/></linearGradient></defs><rect width="400" height="240" fill="url(#${id})"/>`;
  if(!dark)s+=`<circle cx="${(60+r()*280).toFixed(0)}" cy="${(36+r()*40).toFixed(0)}" r="${(15+r()*10).toFixed(0)}" fill="${c[2]}" opacity=".92"/>`;
  return s+(BODY[kind]||BODY.mountain)(r)+"</svg>"}
-const unsp=p=>"https://unsplash.com/@"+p.u+"?utm_source=puteshestvie_2027&utm_medium=referral";
-function pic(key,kind,seed,bare){const p=typeof PIC!=="undefined"&&PIC[key];if(!p)return art(kind,seed);return `<img src="${p.s}" alt="${esc(seed)}" loading="lazy">`+(bare?"":`<a class="cr" href="${unsp(p)}" target="_blank" rel="noopener">${esc(p.n)} / Unsplash</a>`)}
-function credit(key){const p=typeof PIC!=="undefined"&&PIC[key];return p?`<a class="mute cr2" href="${unsp(p)}" target="_blank" rel="noopener">Фото: ${esc(p.n)} / Unsplash</a>`:""}
+const unsp=p=>p.w?"https://commons.wikimedia.org/wiki/"+encodeURI(p.i.replace(/ /g,"_")):"https://unsplash.com/@"+p.u+"?utm_source=puteshestvie_2027&utm_medium=referral";
+const pcr=p=>p.w?p.n+", "+p.l+" / Wikimedia Commons":p.n+" / Unsplash";
+function pic(key,kind,seed,bare){const p=typeof PIC!=="undefined"&&PIC[key];if(!p)return art(kind,seed);return `<img src="${p.s}" alt="${esc(seed)}" loading="lazy">`+(bare?"":`<a class="cr" href="${unsp(p)}" target="_blank" rel="noopener">${esc(pcr(p))}</a>`)}
+function credit(key){const p=typeof PIC!=="undefined"&&PIC[key];return p?`<a class="mute cr2" href="${unsp(p)}" target="_blank" rel="noopener">Фото: ${esc(pcr(p))}</a>`:""}
 /* ---------- состояние: общее через db, запасное в браузере ---------- */
 const S={checks:{},actuals:{},opts:{sc:"e",pe:true,rate:RATE0},db:null};
 const LS={get(k){try{return JSON.parse(localStorage.getItem("tr27_"+k)||"null")}catch(e){return null}},set(k,v){try{localStorage.setItem("tr27_"+k,JSON.stringify(v))}catch(e){}}};
@@ -75,7 +76,7 @@ function renderRoute(){
 const PF={c:"",t:"",st:""};
 function renderPlaces(){
  const list=P.filter(p=>(!PF.c||p[0]===PF.c)&&(!PF.t||p[3].includes(PF.t))&&(!PF.st||p[1]===PF.st));
- $("#t-places").innerHTML=`<div><h2>Места</h2><p class="lead">${P.length} мест: виды, природа, бани и термы, бары, еда и развлечения. Где нет фото с Unsplash, стоит стилизованный рисунок; больше снимков открывает кнопка «Фото». Цены ориентировочные в шекелях, проверяйте за месяц до поездки.</p></div>
+ $("#t-places").innerHTML=`<div><h2>Места</h2><p class="lead">${P.length} мест: виды, природа, бани и термы, бары, еда и развлечения. Фото с Unsplash и Wikimedia Commons; где их нет, стоит стилизованный рисунок; больше снимков открывает кнопка «Фото». Цены ориентировочные в шекелях, проверяйте за месяц до поездки.</p></div>
  <div class="chips" id="fc">${[["","Все страны"],...Object.entries(CC).filter(([k])=>k!=="am").map(([k,v])=>[k,v[0]])].map(([k,v])=>`<button type="button" class="chip" aria-pressed="${PF.c===k}" data-c="${k}">${v}</button>`).join("")}</div>
  <div class="chips" id="ft">${[["","Любые"],...Object.entries(TYPES)].map(([k,v])=>`<button type="button" class="chip" aria-pressed="${PF.t===k}" data-t="${k}">${v}</button>`).join("")}</div>
  ${PF.st?`<div class="note">Показан этап: ${esc(stageOf(PF.st).name)}. <button class="chip" type="button" data-clr="1">Показать все</button></div>`:""}
