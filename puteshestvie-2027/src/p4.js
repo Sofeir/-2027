@@ -172,3 +172,4 @@ function theme(){const b=$("#theme");let t=LS.get("theme")||"auto";const ap=()=>
 tabs();header();theme();renderRoute();renderPlaces();renderHikes();renderBudget();renderHotels();renderFlights();renderPack();renderNear();renderPhotos();
 {const h=(location.hash||"").slice(1);go(TABS.some(t=>t[0]===h)?h:(LS.get("tab")||"route"))}
 initDb();
+$("#lang").onclick=()=>setLang(LANG==="es"?"ru":"es");if(LANG==="es")setLang("es");else langBtn();
