@@ -65,7 +65,7 @@ function tabs(){$("#tabs").innerHTML=TABS.map(([k,v])=>`<button role="tab" type=
 /* ---------- маршрут ---------- */
 function dayPlan(x){
  const d=DAYS[x.id];if(!d)return "";
- return `<details class="plan"><summary>По дням</summary><ol class="pl">${d.map(([o,l,t,s])=>{const lb=l>1?dm(addDays(x.from,o))+"–"+dm(addDays(x.from,o+l-1)):dm(addDays(x.from,o));return `<li><b>${lb}. ${esc(t)}</b><div>${esc(s)}</div></li>`}).join("")}</ol></details>`}
+ return `<details class="plan"><summary>По дням</summary><ol class="pl">${d.map(([o,l,t,s])=>{const d1=addDays(x.from,o),d2=addDays(x.from,o+l-1),lb=l<2?dm(d1):d1.getUTCMonth()==d2.getUTCMonth()?d1.getUTCDate()+"–"+dm(d2):dm(d1)+" – "+dm(d2);return `<li><b><span>${lb}.</span> <span>${esc(t)}</span></b><div>${esc(s)}</div></li>`}).join("")}</ol></details>`}
 function stagePlan(x){
  const DM={"января":0,"февраля":1,"марта":2,"апреля":3,"мая":4,"июня":5,"июля":6,"августа":7};
  const a=addDays(x.from,0),b=addDays(x.from,x.n);
