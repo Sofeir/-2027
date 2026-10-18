@@ -63,15 +63,25 @@ const TABS=[["route","Маршрут"],["places","Места"],["hikes","Пох�
 function go(id){TABS.forEach(([k])=>{$("#t-"+k).hidden=k!==id});document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.t===id));try{history.replaceState(null,"","#"+id)}catch(e){}scrollTo(0,0);LS.set("tab",id)}
 function tabs(){$("#tabs").innerHTML=TABS.map(([k,v])=>`<button role="tab" type="button" data-t="${k}" aria-selected="false">${v}</button>`).join("");$("#tabs").onclick=e=>{const b=e.target.closest("button");if(b)go(b.dataset.t)}}
 /* ---------- маршрут ---------- */
+function stagePlan(x){
+ const DM={"января":0,"февраля":1,"марта":2,"апреля":3,"мая":4,"июня":5,"июля":6,"августа":7};
+ const a=addDays(x.from,0),b=addDays(x.from,x.n);
+ const legs=FL.filter(f=>{const m=String(f[0]).match(/^(\d+)(?:–\d+)? ([а-я]+)/);if(!m)return x.id==="gl"?f[0]==="в течение пребывания":x.id==="back"&&f[0]==="после 22 августа";const d=new Date(Date.UTC(2027,DM[m[2]],+m[1],12));return d>=a&&d<=b&&!(d.getTime()===b.getTime()&&x.id==="la")});
+ const ps=P.filter(p=>["la","road","sv"].includes(x.id)?p[1]===x.id:p[0]===x.c&&x.id!=="back");
+ if(!legs.length&&!ps.length)return "";
+ const cities=groupCity(ps);
+ return `<details class="plan"><summary>План по шагам</summary>${legs.length?`<h4>Как добраться</h4><ol class="legs">${legs.map(f=>`<li><b>${esc(f[0])}</b> <span>${esc(f[1])}</span><div class="mute">${esc(f[2])}${f[3]?" · "+esc(f[3]):""}</div>${f[6]?`<div class="note">${esc(f[6])}</div>`:""}</li>`).join("")}</ol>`:""}${cities.length?`<h4>Что делать</h4>${cities.map(([c,l],i)=>`<h5 class="stp"><span>Шаг ${i+1}.</span> <span>${esc(c)}</span></h5><ol class="pl">${l.map(p=>`<li><b>${esc(p[4])}</b><div>${esc(p[5])}</div><div class="mute">${esc(p[6])}</div></li>`).join("")}</ol>`).join("")}`:""}</details>`}
 function renderRoute(){
  const deadlines=[["как только откроются продажи, обычно в начале года","Билеты на Мачу-Пикчу и поезд до Агуас-Кальентес"],["февраль — март","Перелёты Тель-Авив — Лос-Анджелес, Сан-Франциско — Буэнос-Айрес, Кито — Ереван; отели в Биг-Суре на 29–31 мая; прививки"],["апрель","Universal Studios, Алькатрас, Йосемити, парковка Muir Woods"],["апрель — май","Тур Туписа — Уюни, ночь в соляном отеле, Galápagos: билеты Кито — острова"],["за 3–4 недели","Столик в Don Julio, милонга, концерты в Сальте, термы Папальтачта"],["за месяц","Страховка, проверка границы в Вильясоне, сборы и форма Галапагосов (48–72 часа до рейса)"]];
  $("#t-route").innerHTML=`<div><h2>Маршрут</h2><p class="lead">94 дня: 20 мая — 22 августа. Лос-Анджелес три дня (два дня Universal и один на прогулки), потом неделя по побережью до Сан-Франциско и две недели у тёти. Три перелёта через океан и один через континент, остальное по земле. Перу вставлено в свободные 12 дней между Боливией и Эквадором, его можно отключить на вкладке «Бюджет».</p></div>`+
  ST.map(x=>{const cnt=P.filter(p=>p[0]===x.c&&(x.id==="back"?false:true)&&(x.c!=="ar"&&x.c!=="us"?true:(x.c==="us"?p[1]===x.id:true))).length;
  const cn=x.id==="back"?0:cnt;
- return `<div class="stage" id="st-${x.id}" style="--c:${CC[x.c][1]}"><div class="row"><h3>${esc(x.name)}</h3><span class="pill">${range(x.from,x.n)} · ${x.n} ${x.free?"дн.":"ноч."}</span></div><p>${esc(x.sum)}</p>${cn?`<div><button class="btn" type="button" data-pl="${x.id}">Места этапа (${cn})</button></div>`:""}</div>`}).join("")+
+ return `<div class="stage" id="st-${x.id}" style="--c:${CC[x.c][1]}"><div class="row"><h3>${esc(x.name)}</h3><span class="pill">${range(x.from,x.n)} · ${x.n} ${x.free?"дн.":"ноч."}</span></div><p>${esc(x.sum)}</p>${stagePlan(x)}${cn?`<div><button class="btn" type="button" data-pl="${x.id}">Места этапа (${cn})</button></div>`:""}</div>`}).join("")+
  `<div><h2>Когда что бронировать</h2></div><div class="tw"><table><thead><tr><th>Срок</th><th>Что</th></tr></thead><tbody>${deadlines.map(d=>`<tr><td>${d[0]}</td><td>${d[1]}</td></tr>`).join("")}</tbody></table></div>`;
  $("#t-route").onclick=e=>{const b=e.target.closest("[data-pl]");if(!b)return;const x=stageOf(b.dataset.pl);PF.c=x.c;PF.st=(x.c==="us"?x.id:"");PF.t="";renderPlaces();go("places")}
 }
+function cardHtml(p){const [c,st,city,ty,name,desc,cost,kind,q]=p;return `<article class="card"><div class="art">${pic(name,kind,name)}</div><div class="body"><div class="meta"><span class="cc" style="background:${CC[c][1]}">${CC[c][0]}</span>${ty.split("").map(t=>`<span class="pill">${TYPES[t]}</span>`).join("")}</div><h3>${esc(name)}</h3><div class="mute" style="font-size:13px">${esc(city)}</div><p class="d">${esc(desc)}</p><div class="cost">${esc(cost)}</div><div class="links"><a class="btn" href="${gimg(q)}" target="_blank" rel="noopener">Фото</a><a class="btn" href="${gmap(q)}" target="_blank" rel="noopener">Карта</a></div></div></article>`}
+function groupCity(list){const m=new Map();list.forEach(p=>{if(!m.has(p[2]))m.set(p[2],[]);m.get(p[2]).push(p)});return [...m]}
 /* ---------- места ---------- */
 const PF={c:"",t:"",st:""};
 function renderPlaces(){
@@ -80,7 +90,7 @@ function renderPlaces(){
  <div class="chips" id="fc">${[["","Все страны"],...Object.entries(CC).filter(([k])=>k!=="am").map(([k,v])=>[k,v[0]])].map(([k,v])=>`<button type="button" class="chip" aria-pressed="${PF.c===k}" data-c="${k}">${v}</button>`).join("")}</div>
  <div class="chips" id="ft">${[["","Любые"],...Object.entries(TYPES)].map(([k,v])=>`<button type="button" class="chip" aria-pressed="${PF.t===k}" data-t="${k}">${v}</button>`).join("")}</div>
  ${PF.st?`<div class="note">Показан этап: ${esc(stageOf(PF.st).name)}. <button class="chip" type="button" data-clr="1">Показать все</button></div>`:""}
- <div class="grid">${list.map(p=>{const [c,st,city,ty,name,desc,cost,kind,q]=p;return `<article class="card"><div class="art">${pic(name,kind,name)}</div><div class="body"><div class="meta"><span class="cc" style="background:${CC[c][1]}">${CC[c][0]}</span>${ty.split("").map(t=>`<span class="pill">${TYPES[t]}</span>`).join("")}</div><h3>${esc(name)}</h3><div class="mute" style="font-size:13px">${esc(city)}</div><p class="d">${esc(desc)}</p><div class="cost">${esc(cost)}</div><div class="links"><a class="btn" href="${gimg(q)}" target="_blank" rel="noopener">Фото</a><a class="btn" href="${gmap(q)}" target="_blank" rel="noopener">Карта</a></div></div></article>`}).join("")||'<p class="mute">Нет мест с таким сочетанием. Сбросьте один из фильтров.</p>'}</div>`;
+ ${list.length?groupCity(list).map(([city,ps])=>`<h3 class="cityh"><span>${esc(city)}</span> <span class="pill">${ps.length}</span></h3><div class="grid">${ps.map(cardHtml).join("")}</div>`).join(""):'<p class="mute">Нет мест с таким сочетанием. Сбросьте один из фильтров.</p>'}`;
  $("#t-places").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.c!==undefined&&b.closest("#fc")){PF.c=b.dataset.c;PF.st=""}else if(b.dataset.t!==undefined&&b.closest("#ft"))PF.t=b.dataset.t;else if(b.dataset.clr){PF.st=""}else return;renderPlaces()}
 }
 /* ---------- походы с трекером ---------- */
