@@ -1,0 +1,658 @@
+<title>Путешествие 2027</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+[hidden]{display:none!important}
+.fp{font-size:15px}
+@media(max-width:560px){.ty{display:none}}
+.wrow{display:grid;grid-template-columns:minmax(90px,150px) 1fr auto 36px;gap:10px;align-items:center;font-size:14px}
+.wrow b{font:600 13px var(--f-m);white-space:nowrap}
+@media(max-width:520px){.wrow{grid-template-columns:1fr auto 34px}.wrow .bar{grid-column:1/-1;order:3}}
+/* Layout: one column "field guide": compact header, sticky tab bar, then card grids per tab.
+   Palette: salt-flat white / night ink, glacier teal accent, one hot coral for calls to action. */
+:root{
+  --bg:#eef3f2;--panel:#ffffff;--panel2:#e6eeed;--ink:#10252b;--mute:#566d76;--line:#d3dfe0;
+  --accent:#0b7a86;--accent-ink:#ffffff;--hot:#d6502b;--ok:#2c8a57;--warn:#b9780f;
+  --us:#3d5a9e;--ar:#2b8fb8;--bo:#b8742a;--pe:#a0444f;--ec:#2f8f5b;--gl:#0e7c7b;--am:#7a4fb0;
+  --f-d:"Unbounded","Onest",system-ui,sans-serif;--f-b:"Onest",system-ui,-apple-system,"Segoe UI",sans-serif;--f-m:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b171c;--panel:#12242b;--panel2:#183039;--ink:#e6f0f1;--mute:#93aab2;--line:#244048;
+  --accent:#41c0cc;--accent-ink:#06242a;--hot:#ff7b54;--ok:#5fcf8c;--warn:#e4ad4a;
+  --us:#8aa5ee;--ar:#63c1e8;--bo:#e0a45a;--pe:#e3808b;--ec:#68cf93;--gl:#4fd0cd;--am:#b794e8;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b171c;--panel:#12242b;--panel2:#183039;--ink:#e6f0f1;--mute:#93aab2;--line:#244048;
+  --accent:#41c0cc;--accent-ink:#06242a;--hot:#ff7b54;--ok:#5fcf8c;--warn:#e4ad4a;
+  --us:#8aa5ee;--ar:#63c1e8;--bo:#e0a45a;--pe:#e3808b;--ec:#68cf93;--gl:#4fd0cd;--am:#b794e8;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-b);padding-block:0 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1120px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-d);font-weight:700;letter-spacing:-.01em;text-wrap:balance;margin:0}
+h2{font-size:22px;margin-bottom:6px}h3{font-size:16px}
+p{margin:0}
+a{color:var(--accent)}
+.mono{font-family:var(--f-m);font-variant-numeric:tabular-nums}
+.mute{color:var(--mute)}
+header.top{padding-block:22px 14px;display:grid;gap:14px}
+.title-row{display:flex;gap:12px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
+.title-row h1{font-size:clamp(26px,5vw,40px)}
+.kicker{font:600 12px/1 var(--f-m);letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.count{font:600 13px var(--f-m);padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.theme{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer}
+/* route strip */
+.strip{display:flex;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--panel)}
+.seg{min-width:0;padding:8px 6px 10px;color:#fff;display:flex;flex-direction:column;gap:2px;justify-content:space-between;min-height:62px;cursor:pointer;border:0;font:inherit;text-align:left;position:relative}
+.seg b{font:600 11px var(--f-m);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg span{font:500 10px var(--f-m);opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg.free{background:repeating-linear-gradient(135deg,var(--mute) 0 6px,transparent 6px 12px)!important;color:var(--ink)}
+.legend{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:12px;color:var(--mute)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:baseline}
+/* tabs */
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding-inline:max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);overflow-x:auto;display:flex;gap:4px;scrollbar-width:none}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+nav.tabs button{font:500 14px var(--f-b);color:var(--mute);background:none;border:0;padding:13px 12px;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;margin-bottom:-1px}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--hot);font-weight:600}
+nav.tabs button:focus-visible,.chip:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section.tab{padding-top:22px;display:grid;gap:18px}
+.lead{max-width:70ch;color:var(--mute)}
+/* chips & pills */
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:500 13px var(--f-b);padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.pill{font:600 11px var(--f-m);padding:3px 8px;border-radius:999px;background:var(--panel2);color:var(--mute);white-space:nowrap}
+/* place cards */
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.card .art{aspect-ratio:5/3;width:100%;display:block;background:var(--panel2)}
+.card .body{padding:12px 14px 14px;display:grid;gap:8px;flex:1;align-content:start}
+.card h3{font-size:15px;line-height:1.25}
+.card .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.card .d{font-size:14px}
+.card .cost{font:500 12px var(--f-m);color:var(--mute)}
+.card .links{display:flex;gap:8px;margin-top:auto;padding-top:4px}
+.btn{font:600 13px var(--f-b);padding:7px 12px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);text-decoration:none;cursor:pointer;display:inline-flex;align-items:center}
+.btn.p{background:var(--hot);border-color:var(--hot);color:#fff}
+.cc{font:600 11px var(--f-m);padding:3px 7px;border-radius:6px;color:#fff;letter-spacing:.04em}
+/* stage list */
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:8px;border-left:6px solid var(--c,var(--accent))}
+.stage .row{display:flex;gap:8px 14px;flex-wrap:wrap;align-items:baseline;justify-content:space-between}
+/* hikes */
+.hike{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.hike>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:stretch}
+.hike>summary::-webkit-details-marker{display:none}
+.hike .art{width:100%;height:100%;min-height:96px;object-fit:cover}
+.hike .hd{padding:10px 12px 10px 0;display:grid;gap:6px;min-width:0}
+.bar{height:8px;border-radius:99px;background:var(--panel2);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);width:0;transition:width .3s}
+.hike .in{padding:6px 16px 16px;display:grid;gap:12px;border-top:1px solid var(--line)}
+.steps{list-style:none;padding:0;margin:0;display:grid;gap:0}
+.steps li{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:start;padding:10px 0;border-bottom:1px dashed var(--line)}
+.steps input{width:20px;height:20px;accent-color:var(--ok);margin-top:2px}
+.steps li.done .t{text-decoration:line-through;color:var(--mute)}
+.steps .km{font:500 12px var(--f-m);color:var(--mute);text-align:right;white-space:nowrap}
+.kv{display:flex;gap:6px 16px;flex-wrap:wrap;font:500 12px var(--f-m);color:var(--mute)}
+@media(max-width:520px){.hike>summary{grid-template-columns:84px 1fr}}
+/* budget */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:14px}
+.controls{display:flex;gap:10px 18px;flex-wrap:wrap;align-items:center}
+.controls label{font-size:13px;color:var(--mute);display:flex;gap:6px;align-items:center}
+input[type=number],select,input[type=text]{font:500 14px var(--f-m);padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);max-width:100%}
+.big{font:700 clamp(26px,6vw,38px)/1 var(--f-d)}
+.band{position:relative;height:34px;border-radius:8px;background:var(--panel2);overflow:hidden}
+.band .ok{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--ok) 28%,transparent)}
+.band .val{position:absolute;top:6px;bottom:6px;left:0;border-radius:4px;background:var(--accent)}
+.bandlbl{display:flex;justify-content:space-between;font:500 11px var(--f-m);color:var(--mute)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 11px var(--f-m);letter-spacing:.06em;text-transform:uppercase;color:var(--mute);background:var(--panel2);white-space:nowrap}
+td.n,th.n{text-align:right;font-family:var(--f-m);font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.sub td{background:var(--panel2);font-weight:600}
+td input[type=number]{width:96px;text-align:right}
+.stack{display:flex;height:22px;border-radius:6px;overflow:hidden}
+.stack i{display:block;height:100%}
+.sw{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:12px;color:var(--mute)}
+.two{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.tip{border-left:4px solid var(--warn);background:var(--panel);padding:10px 14px;border-radius:0 10px 10px 0;font-size:14px}
+.photos{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+.photos figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.photos img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
+.photos figcaption{padding:8px 10px;font-size:13px}
+.note{font-size:12px;color:var(--mute)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:40}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="title-row">
+    <div><div class="kicker">20 мая — 22 августа 2027 · на двоих</div><h1>Путешествие 2027</h1></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div class="count" id="count"></div><button class="theme" id="theme" type="button">Тема</button></div>
+  </div>
+  <div class="strip" id="strip" role="list"></div>
+  <div class="legend" id="legend"></div>
+</header>
+<nav class="tabs" id="tabs" role="tablist"></nav>
+
+<section class="tab" id="t-route"></section>
+<section class="tab" id="t-places" hidden></section>
+<section class="tab" id="t-hikes" hidden></section>
+<section class="tab" id="t-budget" hidden></section>
+<section class="tab" id="t-hotels" hidden></section>
+<section class="tab" id="t-flights" hidden></section>
+<section class="tab" id="t-pack" hidden></section>
+<section class="tab" id="t-near" hidden></section>
+<section class="tab" id="t-photos" hidden></section>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script>
+const RATE0=3.11;
+const CC={us:["США","var(--us)"],ar:["Аргентина","var(--ar)"],bo:["Боливия","var(--bo)"],pe:["Перу","var(--pe)"],ec:["Эквадор","var(--ec)"],gl:["Галапагос","var(--gl)"],am:["Армения","var(--am)"]};
+const ST=[
+ {id:"la",c:"us",name:"Лос-Анджелес",short:"LAX",from:"2027-05-20",n:3,sum:"Три дня: два дня в Universal и один день на прогулки — закат в Гриффите, Санта-Моника и Венис, Getty Center, Малибу."},
+ {id:"road",c:"us",name:"Highway 1",short:"Big Sur",from:"2027-05-23",n:7,sum:"Неделя на машине вдоль океана до Сан-Франциско: Санта-Барбара, Солванг, Морро-Бей, Биг-Сур, Монтерей, Санта-Круз. Выходные Memorial Day 29–31 мая, отели бронируйте заранее."},
+ {id:"sv",c:"us",name:"Кремниевая долина",short:"SFO",from:"2027-05-30",n:14,sum:"Две недели у тёти: Сан-Франциско, три дня Йосемити, русская баня Archimedes, секвойи и Напа."},
+ {id:"ar",c:"ar",name:"Аргентина",short:"BUE",from:"2027-06-14",n:14,sum:"Буэнос-Айрес и танго, Игуасу, Мендоса и термы, цветные горы севера. Зима: солнечно и сухо на севере, холодно на юге."},
+ {id:"bo",c:"bo",name:"Боливия",short:"UYU",from:"2027-06-28",n:10,sum:"Сухопутный вход через Вильясон, Туписа, четыре дня джипов до Уюни, Сукре, Ла-Пас."},
+ {id:"pe",c:"pe",name:"Перу",short:"CUZ",from:"2027-07-08",n:12,sum:"Озеро Титикака, Куско, Священная долина, Мачу-Пикчу, Арекипа, ужин в Лиме."},
+ {id:"ec",c:"ec",name:"Эквадор",short:"UIO",from:"2027-07-20",n:14,sum:"Только безопасные места: Кито, Миндо, Котопакси, Килотоа, Баньос, Куэнка."},
+ {id:"gl",c:"gl",name:"Галапагос",short:"GPS",from:"2027-08-03",n:14,sum:"Две недели у семьи: острова, сноркелинг, вулканы."},
+ {id:"back",c:"am",name:"Дорога и запас",short:"EVN",from:"2027-08-17",n:5,free:true,sum:"Перелёт Кито — Ереван с пересадкой, запас на задержки. 22 августа: фестиваль в Ереване."}
+];
+// страна, этап, город, типы (v виды, n природа, h поход, s бани и термы, b бары и тусовки, f еда, x развлечения, c культура), название, описание, цена, сцена, запрос
+const P=[
+["us","la","Лос-Анджелес","x","Universal Studios Hollywood","Studio Tour по декорациям, Super Nintendo World, Wizarding World. Приезжайте к открытию и сразу идите на самые популярные аттракционы. Два дня позволяют спокойно сходить на Studio Tour, Nintendo World и Wizarding World, не бегая. Будни свободнее выходных. Билет дешевле на сайте за 3–4 недели, чем на кассе.","≈₪350–600 с человека за два дня: билет на 2 дня дешевле двух разовых","city","Universal Studios Hollywood"],
+["us","la","Лос-Анджелес","v","Обсерватория Гриффита на закате","Бесплатный вход и лучший вид на город и на надпись Hollywood. Приходите за час до заката, парковка быстро заполняется. Можно подняться пешком от Fern Dell.","бесплатно","mountain","Griffith Observatory"],
+["us","la","Лос-Анджелес","s","Wi Spa, Корейский квартал","Корейская баня (джимджильбан) круглосуточно: горячие бассейны, соляные и глиняные сауны, комнаты отдыха. Хороший способ выспаться и согреться после перелёта.","≈₪130 с человека","spa","Wi Spa Los Angeles"],
+["us","la","Лос-Анджелес","b","Perch, Даунтаун","Французский бар на крыше небоскрёба, вид на огни города, коктейли и джаз. Приходите к закату, в выходные вечером очередь.","коктейль ≈₪60","night","Perch Los Angeles rooftop"],
+["us","la","Санта-Моника","x","Santa Monica Pier и Venice Beach","Колесо обозрения, закат над океаном, скейт-парк и уличные музыканты в Венисе. Прогулка по набережной на велосипеде занимает час, прокат ≈₪35.","бесплатно","coast","Santa Monica Pier"],
+["us","la","Малибу","n","El Matador Beach","Арки в скалах и пещеры на малолюдном пляже. Спуск по ступеням, приезжайте утром при отливе: в прилив часть проходов закрыта.","парковка ≈₪25","coast","El Matador State Beach"],
+["us","la","Лос-Анджелес","v","Getty Center","Музей на холме с садами и одним из лучших видов на весь город и океан. Вход бесплатный, платная только парковка. Идти лучше после обеда: свет мягче, и закат совсем рядом.","парковка ≈₪80, вход бесплатно","mountain","Getty Center Los Angeles"],
+["us","la","Лос-Анджелес","b","Sunset Strip и Hollywood: вечер","Бары и концертные клубы на Сансет-бульваре, живая музыка в Whisky a Go Go, тусовка после Universal. Возьмите такси или Uber: вечером парковка дорогая.","коктейль ≈₪55–70","city","Sunset Strip West Hollywood"],
+["us","road","Морро-Бей","n","Морро-Рок и каяки с морскими выдрами","Огромная скала в бухте, на каяке можно подплыть к выдрам и тюленям. Аренда на два часа. Утром вода спокойнее.","каяк ≈₪130–170 с человека","coast","Morro Rock Morro Bay"],
+["us","road","Авила-Бич","s","Sycamore Mineral Springs: бочки","Частные деревянные бочки с минеральной водой на склоне под деревьями, час на двоих. Рядом пляж Авила и закат. Бронируйте заранее, на выходные места разбирают.","≈₪250–400 за бочку на час","coast","Sycamore Mineral Springs Resort"],
+["us","road","Кармел","n","Point Lobos","Заповедник с кипарисами, бухтами и морскими львами, часть тропинок идёт над самой водой. Парковка небольшая, приезжайте к открытию.","≈₪40–60 за машину","coast","Point Lobos State Natural Reserve"],
+["us","road","Санта-Круз","x","Санта-Круз: набережная и Natural Bridges","Старый парк аттракционов на пирсе, морские львы под причалом и арка в скале на пляже. Остановка перед Сан-Франциско.","парк бесплатно, аттракционы платные","coast","Santa Cruz Beach Boardwalk"],
+["us","road","Хаф-Мун-Бей","v","Pigeon Point: маяк","Один из самых высоких маяков на побережье, под ним бухты и приливные бассейны. Закат с обрыва, тепло одевайтесь: на побережье ветер.","бесплатно","coast","Pigeon Point Lighthouse"],
+["us","road","Санта-Барбара","c","Санта-Барбара и пирс Stearns Wharf","Испанская миссия, пальмы и длинный деревянный пирс. Ужин на улице State Street, обед с морепродуктами у гавани.","бесплатно","coast","Stearns Wharf Santa Barbara"],
+["us","road","Солванг","f","Солванг и дегустации","Датская деревня в винной долине: булочные, ветряная мельница, дегустации вин в соседней Санта-Инес. Остановка на 2–3 часа по пути.","дегустация ≈₪70","vineyard","Solvang California"],
+["us","road","Сан-Симеон","n","Морские слоны на Piedras Blancas","Сотни слонов-тюленей лежат на пляже прямо у шоссе. Смотровая площадка бесплатная, весной видно молодняк и линьку.","бесплатно","coast","Piedras Blancas Elephant Seal Rookery"],
+["us","road","Биг-Сур","v","McWay Falls","Водопад падает прямо на пляж в бухте. Десять минут пешком от парковки в парке Julia Pfeiffer Burns, на сам пляж нельзя, смотрят сверху.","парк ≈₪40 за машину","falls","McWay Falls"],
+["us","road","Биг-Сур","v","Мост Bixby Creek","Самый фотографируемый мост побережья. Остановитесь на смотровой с северной стороны до 11 утра, пока нет тумана.","бесплатно","road","Bixby Creek Bridge"],
+["us","road","Биг-Сур","n","Pfeiffer Beach","Пляж с фиолетовым песком и аркой в скале: на закате в арку попадает солнце. Дорога узкая, перед поездкой проверьте, что она открыта.","≈₪40 за машину","coast","Pfeiffer Beach Big Sur"],
+["us","road","Биг-Сур","s","Esalen: ночные термальные ванны","Горячие ванны на обрыве над океаном. Вход ночью, с 1 до 3, по предварительной записи. Если получится попасть, это лучшее место всей дороги. Условия на 2027 проверьте заранее.","≈₪190 с человека","spa","Esalen Institute Hot Springs"],
+["us","road","Монтерей","x","Аквариум Monterey Bay","Один из лучших аквариумов мира: медузы, морские выдры, лес гигантских водорослей. Билет берите онлайн на утро.","≈₪190 с человека","coast","Monterey Bay Aquarium"],
+["us","road","Кармел","v","17-Mile Drive","Платная дорога через поля для гольфа и скалы с тюленями. Знаменитый кипарис Lone Cypress, лучше ехать утром.","≈₪35 за машину","coast","17-Mile Drive"],
+["us","sv","Сан-Франциско","v","Мост Золотые Ворота: Battery Spencer","Смотровая на северной стороне, откуда мост виден целиком на фоне города. Приезжайте утром или на закате, днём туман.","бесплатно","coast","Battery Spencer Golden Gate Bridge"],
+["us","sv","Сан-Франциско","c","Алькатрас","Остров-тюрьма, звуковой тур входит в билет. Билеты расходятся за 3–4 недели.","≈₪145 с человека","island","Alcatraz Island"],
+["us","sv","Сан-Франциско","s","Archimedes Banya","Русская баня в Сан-Франциско: парная с веником, холодный бассейн, горячий бассейн и кафе со знакомой кухней. Ходите утром в будни.","≈₪200 с человека","spa","Archimedes Banya San Francisco"],
+["us","sv","Сан-Франциско","b","Tonga Room","Тики-бар в отеле Fairmont: коктейли у бассейна с лодкой-оркестром и «дождём». Весело и необычно, коктейли дорогие, заходите на час.","коктейль ≈₪75","night","Tonga Room San Francisco"],
+["us","sv","Сан-Франциско","b","Top of the Mark","Бар на верхнем этаже в Nob Hill: вид на город на 360° и джаз. Приходите на закат и берите один коктейль.","коктейль ≈₪75","night","Top of the Mark San Francisco"],
+["us","sv","Сан-Франциско","x","Dolores Park и район Mission","В солнечное воскресенье весь город сидит здесь с пледами. Рядом знаменитые буррито в La Taqueria и мороженое Bi-Rite.","буррито ≈₪50","city","Dolores Park San Francisco"],
+["us","sv","Мил-Вэлли","n","Muir Woods","Секвойи высотой 70 метров в 30 минутах от моста. Парковку или шаттл бронируйте заранее на сайте парка.","≈₪40 с человека","forest","Muir Woods National Monument"],
+["us","sv","Йосемити","h","Йосемити: водопады и Glacier Point","Берите три дня. В июне водопады полноводны. Тропа Mist Trail к Vernal и Nevada Fall идёт во вкладке «Походы» с трекером. Правила въезда и открытие перевала Tioga проверьте заранее.","вход ≈₪110 за машину","mountain","Yosemite National Park"],
+["us","sv","Тахо","v","Emerald Bay, озеро Тахо","Изумрудная бухта с островом и замком. Четыре часа езды от Сан-Хосе. Вода в июне ещё холодная, купание только для смелых.","бесплатно","lake","Emerald Bay Lake Tahoe"],
+["us","sv","Кремниевая долина","c","Музей истории компьютеров и Стэнфорд","Музей в Маунтин-Вью, потом прогулка по кампусу Стэнфорда и башня Hoover с видом. Рядом гостевой центр Apple Park.","музей ≈₪55","city","Computer History Museum"],
+["us","sv","Санта-Круз","x","Santa Cruz Beach Boardwalk","Старый парк аттракционов на пляже с деревянными горками. День заканчивайте на пирсе с морскими львами.","≈₪25–50","coast","Santa Cruz Beach Boardwalk"],
+["us","sv","Калистога","s","Грязевые ванны в Калистоге","Термальные источники и грязевые ванны в винной долине Напа, например Dr. Wilkinson’s. Можно соединить с дегустацией вина.","≈₪300 с человека","spa","Dr. Wilkinson's Hot Springs Calistoga"],
+["ar","ar","Буэнос-Айрес","c","Реколета и книжный El Ateneo","Мавзолеи под открытым небом и театр, превращённый в книжный магазин. Оба рядом, хватит половины дня.","кладбище бесплатно","city","Cementerio de la Recoleta"],
+["ar","ar","Буэнос-Айрес","x","Танго в Сан-Тельмо","Воскресная ярмарка антиквариата на улице Defensa и милонга вечером. Шоу в театре стоит дорого, обычная милонга дешевле и живее.","милонга ≈₪40","night","Milonga San Telmo Buenos Aires"],
+["ar","ar","Буэнос-Айрес","b","Florería Atlántico","Бар за цветочным магазином, вход вниз в подвал, коктейли с местными ингредиентами. На вечер бронируйте столик.","коктейль ≈₪45","night","Florería Atlántico Buenos Aires"],
+["ar","ar","Буэнос-Айрес","b","Palermo Soho вечером","Улицы Honduras и Gorriti: десятки баров, пабов и клубов в нескольких кварталах. Жизнь начинается после 22:00. Телефон на улице в руке не держите.","пиво ≈₪20","night","Palermo Soho Buenos Aires bars"],
+["ar","ar","Буэнос-Айрес","f","Parrilla Don Julio","Стейк на углях в одном из лучших стейкхаусов страны. Столик бронируют за 3–4 недели. Можно взять одну порцию на двоих.","≈₪250 на двоих","night","Parrilla Don Julio"],
+["ar","ig","Игуасу","v","Garganta del Diablo","«Глотка дьявола»: тропа над обрывом, куда падает половина воды Игуасу. Поезд идёт до тропы. Приходите к открытию.","вход ≈₪145 с человека","falls","Garganta del Diablo Iguazu"],
+["ar","ig","Игуасу","x","Лодка под водопады Gran Aventura","Короткий джип-тур по лесу и лодка, которая заходит под струи. Возьмите непромокаемый чехол для телефона.","≈₪160 с человека","falls","Gran Aventura Iguazu"],
+["ar","mz","Мендоса","f","Обед на винодельне в долине Уко","Дегустация и обед из нескольких блюд среди виноградников с видом на Анды. В июне жёлтые листья, тихо и дешевле.","≈₪230 с человека","vineyard","Valle de Uco bodega lunch"],
+["ar","mz","Качеута","s","Termas de Cacheuta","Термальные источники в горном ущелье в часе от Мендосы: бассейны от 30 до 40 °C и грязевые процедуры. В холодный июнь самое то. Можно на один день.","≈₪140 с человека","spa","Termas de Cacheuta Mendoza"],
+["ar","mz","Мендоса","v","Puente del Inca и Аконкагуа","Дорога к чилийской границе: каменный мост цвета ржавчины над тёплой рекой и вид на Аконкагуа (6960 м) с площадки Horcones. Зимой лежит снег.","бесплатно","mountain","Puente del Inca Aconcagua"],
+["ar","sa","Кафаяте","n","Quebrada de las Conchas","Красные скалы причудливой формы: «Амфитеатр», «Глотка дьявола», «Замки». Всё вдоль трассы RN68, можно остановиться в десяти точках.","бесплатно","canyon","Quebrada de las Conchas Cafayate"],
+["ar","sa","Пурмамарка","v","Cerro de los Siete Colores","Радужные склоны над деревней Пурмамарка. Круговая тропа Paseo de los Colorados занимает час.","≈₪10","canyon","Cerro de los Siete Colores Purmamarca"],
+["ar","sa","Умауака","v","Hornocal, гора 14 цветов","Полосатая гора на высоте 4350 м, лучший свет после обеда. Едут на джипе из Умауаки. На высоте перехватывает дыхание.","≈₪25 вход","canyon","Hornocal Humahuaca"],
+["ar","sa","Салинас-Грандес","n","Salinas Grandes","Соляная пустыня на высоте 3450 м по пути в Чили. Вид и тени как в Боливии, но добраться проще.","≈₪20","salar","Salinas Grandes Jujuy"],
+["ar","sa","Жужуй","s","Termas de Reyes","Горячие источники в ущелье в получасе от Сан-Сальвадор-де-Жужуй: открытые бассейны у горной речки. Отличный отдых после дней в дороге.","≈₪35 с человека","spa","Termas de Reyes Jujuy"],
+["ar","sa","Сальта","b","Пенья в Сальте","Вечер народной музыки и танцев с эмпанадами, например La Casona del Molino. Живая музыка, вино и локро.","≈₪90 на двоих","night","La Casona del Molino Salta"],
+["bo","bo","Туписа","n","Туписа: Valle de los Machos","Красные каньоны и скальные столбы, прогулки на лошадях по Quebrada Palala. Хорошее место, чтобы начать акклиматизацию на 3000 м.","≈₪90 за лошадь","canyon","Tupiza Valle de los Machos"],
+["bo","bo","Уюни","v","Рассвет на Salar de Uyuni","Соляная пустыня на высоте 3650 м, около 10 000 км². В июне зеркального эффекта нет, зато соль в шестиугольниках и чистое небо. Ночь в соляном отеле и рассвет у острова Incahuasi.","тур 4 дня ≈₪710 с человека","salar","Salar de Uyuni"],
+["bo","bo","Лагуна Колорада","n","Laguna Colorada и фламинго","Красная лагуна с тремя видами фламинго на высоте 4300 м, рядом гейзеры Sol de Mañana. Берите шапку, ночью до –15 °C.","вход ≈₪55","lake","Laguna Colorada Bolivia flamingos"],
+["bo","bo","Полькес","s","Termas de Polques","Тёплая лагуна в Боливийских Андах на 4400 м. Пар над водой и розовый рассвет. После ночи на холоде запоминается надолго.","≈₪30","spa","Termas de Polques Bolivia"],
+["bo","bo","Сукре","c","Сукре: белый город","Колониальный город под охраной ЮНЕСКО, смотровая La Recoleta, шоколад и рынок. Самый мягкий климат в Боливии, 2800 м.","бесплатно","city","Sucre Bolivia La Recoleta"],
+["bo","bo","Ла-Пас","v","Mi Teleférico","Самая длинная в мире городская канатная дорога. Жёлтая и красная линии дают панорамы города и вершины Иллимани. Проезд ≈₪5.","≈₪5","city","Mi Teleférico La Paz"],
+["bo","bo","Эль-Альто","x","Борьба cholitas","Женская борьба по воскресеньям в Эль-Альто: яркие костюмы и безумное шоу. Идите с гидом или на такси туда и обратно.","≈₪55","night","Cholita wrestling El Alto"],
+["bo","bo","Ла-Пас","b","Район Sopocachi","Бары, кафе и галереи вокруг Plaza Avaroa. Вечером передвигайтесь на такси, а не пешком по тёмным улицам.","пиво ≈₪15","night","Sopocachi La Paz bars"],
+["bo","bo","Титикака","h","Isla del Sol","Переход с севера на юг острова за 3–4 часа, вид на озеро и снежные пики Кордильеры-Реаль. Лодка из Копакабаны ≈₪20.","≈₪40 на двоих","lake","Isla del Sol Lake Titicaca"],
+["pe","pe","Мачу-Пикчу","v","Мачу-Пикчу","Билеты привязаны к дате, времени и маршруту. Покупайте в начале года на официальном сайте. Идите с первым автобусом или поднимайтесь к Sun Gate. Нужен паспорт.","вход ≈₪170 с человека","ruins","Machu Picchu"],
+["pe","pe","Куско","h","Радужная гора Vinicunca","5036 м над уровнем моря: тур из Куско выезжает в 3 ночи, подъём 2–3 часа. Только после акклиматизации в Боливии и Куско.","≈₪110 с человека","mountain","Vinicunca Rainbow Mountain"],
+["pe","pe","Куско","c","Саксайуаман и рынок San Pedro","Инкская цитадель над городом и рынок со свежими соками. Boleto Turístico действует 10 дней и закрывает много мест.","билет ≈₪140","ruins","Sacsayhuamán Cusco"],
+["pe","pe","Священная долина","c","Морай и соляные террасы Мараса","Круглые террасы инков и тысячи соляных ванн, которые работают с инкских времён. Приезжайте утром.","вход ≈₪50","ruins","Moray Maras Salt Mines"],
+["pe","pe","Агуас-Кальентес","s","Термы Aguas Calientes","Тёплые бассейны у реки в городке под Мачу-Пикчу. Хорошо после дня на ногах.","≈₪25 с человека","spa","Baños Termales Aguas Calientes Machu Picchu"],
+["pe","pe","Куско","b","Бары Куско","Museo del Pisco, Fallen Angel с причудливым декором и бары с видом на площадь. Paddy’s считается самым высоким ирландским пабом в мире.","писко сауэр ≈₪30","night","Museo del Pisco Cusco"],
+["pe","pe","Пуно","c","Острова Урос и Такиле","Тростниковые острова и остров, где мужчины вяжут на публику. Тур на полдня по озеру Титикака.","≈₪95 с человека","lake","Uros Floating Islands Puno"],
+["pe","pe","Арекипа","c","Монастырь Санта-Каталина","Город-монастырь в синих и красных стенах и вид с Yanahuara на вулкан Мисти.","≈₪70","city","Santa Catalina Monastery Arequipa"],
+["pe","pe","Лима","f","Севиче и Барранко","Севиче на обед в Мирафлоресе или Барранко и вечер в барах возле Моста вздохов. Лучшая кухня всей поездки.","обед ≈₪60 на двоих","night","Barranco Lima bars"],
+["ec","ec","Кито","v","TelefériQo и Cruz Loma","Канатная дорога на 4050 м: вид на вулканы вокруг Кито. Езжайте утром, пока нет облаков.","≈₪45 с человека","mountain","TelefériQo Quito"],
+["ec","ec","Кито","b","La Ronda","Узкая колониальная улица с кафе, барами и живой музыкой вечером. Домой на такси из приложения.","канеласо ≈₪10","night","Calle La Ronda Quito"],
+["ec","ec","Кито","c","Базилика Voto Nacional","Готический собор с химерами в виде игуан и черепах. Можно подняться на башню с видом на город.","≈₪10","city","Basílica del Voto Nacional Quito"],
+["ec","ec","Папальтачта","s","Термы Папальтачта","Горячие бассейны на высоте 3300 м в 1–2 часах езды от Кито, с видом на вулкан. Едут на целый день, рядом ресторан с форелью.","вход ≈₪35 с человека","spa","Termas de Papallacta"],
+["ec","ec","Котопакси","s","Горячие чаны в хасьендах","Во многих лоджах у Котопакси и Килотоа есть дровяные чаны с горячей водой и видом на вулканы. При бронировании спрашивайте «tina de madera» или «hot tub».","≈₪60–110 за вечер","spa","hacienda Cotopaxi hot tub"],
+["ec","ec","Миндо","n","Туманный лес Миндо","Колибри, бабочки, водопады, плантации какао и зиплайн. Ночёвка в лодже посреди леса.","зиплайн ≈₪70","forest","Mindo Ecuador cloud forest"],
+["ec","ec","Котопакси","h","Вулкан Котопакси","Национальный парк с конусом 5897 м и лагуной Limpiopungo. От парковки на 4600 м идут пешком к убежищу, 1–2 часа. В облаках видимости почти нет.","вход ≈₪15","volcano","Cotopaxi National Park"],
+["ec","ec","Килотоа","h","Кратерное озеро Quilotoa","Изумрудное озеро на высоте 3900 м. Кратер обходят по гребню 5–6 часов или спускаются к воде и поднимаются на муле.","≈₪10","lake","Laguna Quilotoa Ecuador"],
+["ec","ec","Баньос","x","Баньос: Ruta de las Cascadas и качели","Велодорога вдоль каскада водопадов с финалом у Pailón del Diablo и качели Casa del Árbol над ущельем с видом на вулкан Тунгурауа.","≈₪40","falls","Baños Ecuador Ruta de las Cascadas"],
+["ec","ec","Баньос","s","Термы Baños de Agua Santa","Городские термальные бассейны Piscinas de la Virgen у водопада и спа-курорт Samari. Вечер после велопрогулки.","≈₪20–110","spa","Piscinas de la Virgen Baños Ecuador"],
+["ec","ec","Алаусí","x","Поезд Nariz del Diablo","Железная дорога зигзагами по скале «Нос дьявола». Проверьте работу и расписание на 2027 и покупайте билеты заранее.","≈₪100 с человека","canyon","Nariz del Diablo Alausí"],
+["ec","ec","Куэнка","n","Национальный парк Эль-Кахас","Сотни озёр на высоте 3900–4200 м и пустынные пейзажи в часе от Куэнки. Берите тёплую одежду.","бесплатно","lake","Cajas National Park Cuenca"],
+["ec","ec","Куэнка","c","Куэнка: центр и смотровая Turi","Город ЮНЕСКО с лабиринтом колониальных улиц, шляпы-панамы и вид с горы Турии. Один из самых спокойных городов Эквадора.","бесплатно","city","Cuenca Ecuador Mirador de Turi"],
+["gl","gl","Санта-Крус","n","Tortuga Bay","Пешая дорога 2,5 км к белому пляжу: морские игуаны и рифовые акулы на мелководье, плавать лучше на втором пляже.","бесплатно","coast","Tortuga Bay Galapagos"],
+["gl","gl","Сан-Кристобаль","n","Kicker Rock (León Dormido)","Скала «спящий лев» с каналом посередине: сноркелинг с акулами и черепахами. Лучший день на островах.","≈₪430 с человека","island","Kicker Rock Galapagos"],
+["gl","gl","Исабела","h","Sierra Negra и Volcán Chico","16 км по краю одного из самых больших кратеров мира и по лавовым полям, 5–6 часов. Из Puerto Villamil, с гидом.","≈₪110 с человека","volcano","Sierra Negra Volcano Isabela"],
+["gl","gl","Исабела","x","Tintoreras","Каналы в лаве с акулами, морскими черепахами и пингвинами, сноркелинг. Часть тура — прогулка по острову с игуанами.","≈₪110 с человека","island","Tintoreras Isabela Galapagos"],
+["gl","gl","Санта-Крус","c","Станция Дарвина и черепахи","Гигантские черепахи и сухопутные игуаны. В горах рядом резерват, где черепахи гуляют на свободе.","станция бесплатно, резерват ≈₪20","island","Charles Darwin Research Station"],
+["gl","gl","Санта-Крус","b","Calle de los Kioskos","Вечером улица Charles Binford превращается в ряд палаток со свежей рыбой и пивом под открытым небом. Лучший ужин за ≈₪55.","≈₪55 на двоих","night","Charles Binford Puerto Ayora kiosks"],
+["gl","gl","Санта-Крус","n","Las Grietas","Узкий каньон с прозрачной водой: прыжки со скал и плавание. Лодка-такси ≈₪3 и 15 минут пешком.","бесплатно","canyon","Las Grietas Santa Cruz Galapagos"],
+["gl","gl","Бартоломе","v","Bartolomé и Pinnacle Rock","Самый узнаваемый вид Галапагосов: скала-пик и две бухты. Тур с Санта-Круса на целый день, часто в связке с Sullivan Bay.","≈₪380 с человека","island","Bartolomé Island Galapagos"]
+];
+const TYPES={v:"Виды",n:"Природа",h:"Походы",s:"Бани и термы",b:"Бары и тусовки",f:"Еда",x:"Развлечения",c:"Культура"};
+const H=[
+{id:"yos",c:"us",kind:"mountain",title:"Mist Trail: Vernal и Nevada Fall",where:"Йосемити, Калифорния",dist:"≈11 км, петля",time:"5–7 ч",gain:"≈600 м",lvl:"средне",note:"Ступени у Vernal Fall мокрые от брызг, нужен дождевик и обувь с рифлёной подошвой. Выходите до 8 утра, на тропе в июне много людей. Проверьте, открыта ли тропа.",
+ steps:[["Happy Isles, старт (1230 м)","Остановка шаттла №16. Литр-два воды на каждого, перекус.","0 км"],["Мост у Vernal Fall","Первый вид на водопад, есть туалеты.","≈1,2 км"],["Каменные ступени Mist Trail","Около 600 гранитных ступеней в облаке брызг.","≈2,0 км"],["Верх Vernal Fall и Emerald Pool","Привал. Купаться нельзя, течение смертельно опасное.","≈2,6 км"],["Верх Nevada Fall (1800 м)","Обед с видом на Half Dome.","≈5,2 км"],["Развилка с John Muir Trail","Спуск по более длинной сухой тропе, без брызг.","≈6,5 км"],["Возврат на Happy Isles","Шаттл до лагеря, мороженое в Curry Village.","≈11 км"]]},
+{id:"big",c:"us",kind:"road",title:"Биг-Сур за один день",where:"Highway 1, с юга на север",dist:"≈160 км за рулём",time:"8–10 ч с остановками",gain:"—",lvl:"легко",note:"Выезжайте из Сан-Симеона рано. Перед поездкой посмотрите карту закрытий Caltrans QuickMap. Заправляйтесь до въезда в Биг-Сур: там мало заправок и дорогой бензин.",
+ steps:[["Piedras Blancas: морские слоны","Бесплатная смотровая у шоссе, 30 минут.","0 км"],["Ragged Point","Смотровая над океаном, кофе.","≈25 км"],["Esalen, Lucia и Nepenthe","Обед на террасе ресторана Nepenthe с видом.","≈85 км"],["McWay Falls","10 минут пешком от парковки в парке Julia Pfeiffer Burns.","≈100 км"],["Pfeiffer Beach","Фиолетовый песок и арка, лучше к закату.","≈125 км"],["Мост Bixby Creek","Фото с северной стороны, до 11 утра нет тумана.","≈145 км"],["Кармел и 17-Mile Drive","Ужин в городе, ночёвка в Монтерее.","≈165 км"]]},
+{id:"igu",c:"ar",kind:"falls",title:"Игуасу за один день",where:"Национальный парк, Аргентина",dist:"≈9 км пешком",time:"8 ч",gain:"невелик",lvl:"легко",note:"Приходите к открытию, вода у Глотки дьявола до 11 утра ещё без толпы. Возьмите дождевик и сухую одежду, в июне прохладно. Билет и расписание поезда посмотрите на сайте парка.",
+ steps:[["Вход в парк, поезд Tren Ecológico","Купите билет и берите поезд до станции Garganta.","0"],["Пешеходная тропа к Garganta del Diablo","1,1 км по мосткам над рекой, половина воды Игуасу падает в обрыв.","≈1 ч"],["Circuito Superior","1,75 км по верхней кромке водопадов.","≈1,5 ч"],["Обед","Только в зоне кафе у входа, не кормите коати.","≈45 мин"],["Circuito Inferior","1,4 км внизу, у подножий водопадов, виды на San Martín.","≈1,5 ч"],["Лодка Gran Aventura","Лодка под струи водопадов, 12 минут.","≈1 ч"],["Тропа Macuco и возврат","Тихая лесная тропа, если остались силы, затем автобус в город.","≈1,5 ч"]]},
+{id:"hor",c:"ar",kind:"canyon",title:"Цветные горы Жужуя: Пурмамарка, Умауака, Hornocal",where:"Quebrada de Humahuaca",dist:"≈130 км на машине",time:"полный день",gain:"до 4350 м",lvl:"легко, высота",note:"Берите машину или тур из Сальты/Жужуя. Выехав из Сальты рано, вернётесь к вечеру. Высота на Hornocal 4350 м: идти медленно, пить воду, пробовать чай из коки.",
+ steps:[["Пурмамарка","Cerro de los Siete Colores: круговая тропа Paseo de los Colorados.","≈1 ч"],["Маймара","Paleta del Pintor: склон, разрисованный в десять цветов.","≈30 мин"],["Тилькара","Pucará, крепость доинкской эпохи, и обед.","≈1,5 ч"],["Умауака","Центр города, часы на площади и рынок.","≈1 ч"],["Hornocal (4350 м)","25 км от города по грунтовке, лучший свет после обеда.","≈1 ч"],["Возврат в Пурмамарку или Сальту","Закат на пустой дороге, ужин с эмпанадами.","≈2–3 ч"]]},
+{id:"sol",c:"bo",kind:"lake",title:"Isla del Sol: переход с севера на юг",where:"Озеро Титикака, Боливия",dist:"≈8 км",time:"3–4 ч",gain:"≈300 м",lvl:"средне, высота 3800 м",note:"На острове нет машин, берите воду и солнцезащитный крем. Рюкзак тяжёлый — оставьте большую часть в отеле в Копакабане. Лодки возвращаются до 16–17 часов.",
+ steps:[["Лодка из Копакабаны в Challapampa","Около 1,5–2 часов по озеру, оплата в порту.","≈2 ч"],["Руины Chinkana и Sacred Rock","Вход оплатите на северной стороне острова.","≈45 мин"],["Тропа по хребту","Вид на оба берега озера и на снежные пики Кордильеры-Реаль.","≈2 ч"],["Деревня Challa и пляж","Привал, ланч с форелью.","≈45 мин"],["Yumani и Лестница инков","Спуск по ступеням к пристани.","≈30 мин"],["Лодка обратно в Копакабану","Расписание уточните на пристани.","≈1,5 ч"]]},
+{id:"rai",c:"pe",kind:"mountain",title:"Радужная гора Vinicunca",where:"Куско, Перу",dist:"≈8 км туда и обратно",time:"≈5–6 ч пешком, тур 12 ч",gain:"≈700 м до 5036 м",lvl:"тяжело из-за высоты",note:"Идти только после акклиматизации в Боливии и Куско. Тёплая куртка, перчатки, трекинговые палки. Без тура с гидом лучше не идти, дорога плохая.",
+ steps:[["Выезд из Куско около 3:00","Трансфер 3 часа, завтрак в деревне.","≈3 ч"],["Старт тропы Quesoyuno (4326 м)","Тропа идёт по долине, можно взять лошадь.","0 км"],["Подъём по долине","Первые 2 км почти ровно, дальше идёт круче.","≈2 км"],["Последний подъём к смотровой","Самый тяжёлый участок на 5000 м, идите медленно.","≈3,7 км"],["Vinicunca (5036 м)","Смотровая, фото, 30 минут.","≈4 км"],["Красная долина (по желанию)","Дополнительный час за красными склонами.","+1 ч"],["Возврат в Куско","К вечеру в городе.","≈12 ч всего"]]},
+{id:"mac",c:"pe",kind:"ruins",title:"Мачу-Пикчу за один день",where:"Агуас-Кальентес, Перу",dist:"≈8–10 км",time:"6–7 ч",gain:"≈400 м",lvl:"легко",note:"Билеты с датой и временем покупаются на официальном сайте. Маршрут (Circuit) указан в билете и поменять его в парке нельзя. Паспорт обязателен.",
+ steps:[["Автобус из Агуас-Кальентес","Первый автобус около 5:30.","≈25 мин"],["Главные ворота и смотровая","Классический вид на город, пока ещё мало людей.","≈45 мин"],["Храм Солнца, Intihuatana, Храм трёх окон","Обход по маршруту из билета.","≈2 ч"],["Тропа к Sun Gate (Inti Punku)","Вид сверху на всю цитадель, 3 км в одну сторону.","≈2 ч"],["Мост инков (по желанию)","Узкая тропа по скале над пропастью.","≈45 мин"],["Спуск в Агуас-Кальентес","Пешком по ступеням или на автобусе.","≈1 ч"],["Термы Aguas Calientes","Тёплые бассейны вечером перед поездом.","≈1,5 ч"]]},
+{id:"qui",c:"ec",kind:"lake",title:"Кратер Quilotoa по кромке",where:"Килотоа, Эквадор",dist:"≈11 км",time:"4–5 ч",gain:"≈400 м",lvl:"средне, высота 3900 м",note:"Начинайте с утра, после полудня закрывает облаком. Нужны куртка и шапка, ветер на гребне сильный. Можно сначала спуститься к озеру: 1 км вниз и 1–1,5 часа обратно.",
+ steps:[["Деревня Quilotoa, смотровая","Первый вид на изумрудное озеро, плата за вход.","0 км"],["Спуск к озеру (по желанию)","300 м вниз, обратно на муле за ≈₪45.","+2 ч"],["Тропа по кромке против часовой","Самая живописная часть, обрывы с обеих сторон.","≈3 км"],["Смотровая Shalalá","Видно озеро и вершины вулканов.","≈6 км"],["Дальняя сторона кратера","Ровный участок, хороший свет после 11.","≈8 км"],["Возврат в деревню","Суп из куриного бульона в кафе возле входа.","≈11 км"]]},
+{id:"cot",c:"ec",kind:"volcano",title:"Котопакси: Limpiopungo и refugio",where:"Национальный парк, Эквадор",dist:"≈6 км",time:"4–5 ч",gain:"≈250 м от парковки",lvl:"средне, высота 4600–4864 м",note:"Хороший свет только утром. Берите тёплую куртку и воду, на 4800 м сильно сбивается дыхание. Доехать до парковки можно на джипе по грунту.",
+ steps:[["Вход в парк, музей","Купите билет и посмотрите экспозицию.","0 км"],["Лагуна Limpiopungo (3800 м)","Круговая тропа 2 км, фламинго и вулкан в отражении.","≈1 ч"],["Парковка (4600 м)","Подъезд на джипе, дальше пешком.","≈40 мин"],["Подъём к убежищу José Rivas","Крутой подъём по вулканическому песку.","≈1–1,5 ч"],["Refugio (4864 м)","Какао, вид на ледник.","≈30 мин"],["Спуск к машине","Бегом по песку — 30 минут.","≈40 мин"]]},
+{id:"sie",c:"gl",kind:"volcano",title:"Вулканы Sierra Negra и Chico",where:"Исабела, Галапагос",dist:"≈16 км",time:"5–6 ч",gain:"≈300 м",lvl:"средне",note:"Только с лицензированным гидом из Puerto Villamil. Тропа открытая, ветра нет, жарко. Берите шляпу, воду и закрытую обувь.",
+ steps:[["Трансфер из Puerto Villamil","Утром в 7:30, 40 минут по дороге.","≈40 мин"],["Старт тропы (≈850 м)","Туман на склоне, дальше открытое небо.","0 км"],["Кромка кальдеры Sierra Negra","Один из самых больших кратеров мира, 10 км в поперечнике.","≈4 км"],["Дальняя сторона и фумаролы","Серные запахи и лавовые поля цвета ржавчины.","≈8 км"],["Volcán Chico","Свежие лавовые потоки, вид на соседние острова.","≈9 км"],["Возврат к машине","Тот же путь, привал на кромке.","≈16 км"]]}
+];
+// Бюджет: USD на двоих, база. Категории: fl перелёты, lo жильё, fo еда, ac входные и развлечения, tr транспорт на месте, ot прочее
+const B=[
+{id:"f1",s:"fl",cat:"fl",l:"Тель-Авив — Лос-Анджелес",b:1100,note:"Одна сторона, с чемоданом 23 кг на каждого. Сумма взята из вкладки «Перелёты»."},
+{id:"f2",s:"fl",cat:"fl",l:"Сан-Хосе / Сан-Франциско — Буэнос-Айрес",b:1300,note:"Через Даллас, Майами, Хьюстон или Панаму, 17–22 ч, с чемоданом."},
+{id:"f3",s:"fl",cat:"fl",l:"Аргентина внутри страны: Игуасу, Мендоса, Сальта",b:480,note:"Три рейса через Буэнос-Айрес с чемоданом до 15 кг. Багаж на промо-тарифах платный."},
+{id:"f4",s:"fl",cat:"fl",l:"Сукре — Ла-Пас",b:100,note:"Час в воздухе вместо 12 часов на автобусе."},
+{id:"f5",s:"fl",cat:"fl",l:"Перу: автобусы и перелёт Арекипа — Лима",b:200,flag:"pe",note:"Автобусы Копакабана — Пуно — Куско — Арекипа и самолёт Арекипа — Лима с чемоданом."},
+{id:"f6",s:"fl",cat:"fl",l:"Лима — Кито",b:340,flag:"pe",note:"Два с небольшим часа в воздухе. Июль дорогой месяц, багаж добавлен."},
+{id:"f6b",s:"fl",cat:"fl",l:"Ла-Пас — Кито через Лиму или Боготу",b:520,flag:"nope",note:"Если Перу выключено."},
+{id:"f7",s:"fl",cat:"fl",l:"Куэнка — Кито",b:100,note:"Час в воздухе вместо 9 часов автобуса."},
+{id:"f8",s:"fl",cat:"fl",l:"Кито — Галапагос — Кито",b:800,note:"Туда и обратно, высокий сезон. Багаж 23 кг включён."},
+{id:"f9",s:"fl",cat:"fl",l:"Лодки между островами Галапагоса",b:180,note:"Три перехода по ≈$30 на человека."},
+{id:"f10",s:"fl",cat:"fl",l:"Кито — Ереван с пересадкой",b:1900,note:"Через Мадрид или Стамбул, 25–30 ч. Август дорогой месяц."},
+{id:"f11",s:"fl",cat:"fl",l:"Ереван — Тель-Авив",b:280,note:"Обратный билет, если нужен. Багаж проверяйте у перевозчика."},
+{id:"la1",s:"la",cat:"lo",l:"Жильё, 3 ночи",b:330,note:"≈$110 за ночь на двоих в хостеле с отдельной комнатой или мотеле."},
+{id:"la2",s:"la",cat:"fo",l:"Еда",b:165,note:"Тако, корейская кухня, бургеры."},
+{id:"la3",s:"la",cat:"ac",l:"Universal на 2 дня, баня Wi Spa",b:400,note:"Два дня Universal на двоих ≈$340 (билет на 2 дня обычно дешевле двух разовых) плюс Wi Spa ≈$60."},
+{id:"la4",s:"la",cat:"tr",l:"Такси и Uber, парковки",b:70,note:"Машину берём утром 23 мая, после Universal. До этого такси и общественный транспорт."},
+{id:"ro1",s:"road",cat:"lo",l:"Жильё, 7 ночей",b:760,note:"≈$110 за ночь в среднем: Санта-Барбара, Морро-Бей, Биг-Сур и Монтерей. Биг-Сур в выходные Memorial Day дороже всех."},
+{id:"ro2",s:"road",cat:"tr",l:"Машина на 7 дней, бензин, возврат в другом городе",b:620,note:"Аренда ≈$50 в день ≈$350, доплата за возврат в другом городе ≈$150, бензин ≈$120."},
+{id:"ro3",s:"road",cat:"fo",l:"Еда",b:340,note:"Пикники и закусочные."},
+{id:"ro4",s:"road",cat:"ac",l:"Парки, бочки Sycamore, парковки",b:240,note:"Бочки ≈$90, каяки с выдрами ≈$90 на двоих, Point Lobos и парковки. Аквариум Монтерея ≈$65 с человека, если идти."},
+{id:"sv1",s:"sv",cat:"lo",l:"Йосемити, 2 ночи",b:260,note:"Хостел или мотель в Марипозе. Дом тёти бесплатно."},
+{id:"sv2",s:"sv",cat:"fo",l:"Еда в Кремниевой долине",b:392,note:"Часть дней едите у тёти, остальное — буррито и вьетнамские кафе."},
+{id:"sv3",s:"sv",cat:"ac",l:"Алькатрас, баня Archimedes, вход в Йосемити",b:300,note:"Алькатрас ≈$90, баня ≈$130, вход ≈$35."},
+{id:"sv4",s:"sv",cat:"tr",l:"Машина на 3 дня в Йосемити, BART и Caltrain",b:280,note:"Вне поездки в горы машина не нужна."},
+{id:"ar1",s:"ar",cat:"lo",l:"Жильё, 14 ночей",b:672,note:"≈$48 за ночь в отелях и апартаментах."},
+{id:"ar2",s:"ar",cat:"fo",l:"Еда",b:420,note:"Стейки и вино в Аргентине стоят дёшево, но для туристов цены выше, чем для местных."},
+{id:"ar3",s:"ar",cat:"ac",l:"Игуасу, вино, Cacheuta, туры по Сальте и Жужую",b:480,note:"Игуасу ≈$190, термы ≈$90, туры ≈$150, остальное — вино и милонга."},
+{id:"ar4",s:"ar",cat:"tr",l:"Такси, автобусы и аренда на день",b:150,note:""},
+{id:"bo1",s:"bo",cat:"lo",l:"Жильё, 7 ночей без тура",b:224,note:"3 ночи на джип-туре уже оплачены в самом туре."},
+{id:"bo2",s:"bo",cat:"ac",l:"Тур Туписа — Уюни, 4 дня 3 ночи",b:460,note:"Ориентир $230 с человека: транспорт, ночлег, питание."},
+{id:"bo3",s:"bo",cat:"fo",l:"Еда вне тура",b:126,note:""},
+{id:"bo4",s:"bo",cat:"ac",l:"Сукре, Ла-Пас, Титикака",b:120,note:""},
+{id:"bo5",s:"bo",cat:"tr",l:"Автобусы и такси",b:120,note:"Граница, Уюни — Сукре, Ла-Пас — Копакабана."},
+{id:"pe1",s:"pe",cat:"lo",l:"Жильё, 12 ночей",b:480,flag:"pe",note:"≈$40 за ночь, в Агуас-Кальентес дороже."},
+{id:"pe2",s:"pe",cat:"fo",l:"Еда",b:312,flag:"pe",note:"Ужины в Лиме дороже."},
+{id:"pe3",s:"pe",cat:"ac",l:"Мачу-Пикчу, поезд, Vinicunca, Священная долина",b:628,flag:"pe",note:"Вход ≈$110, поезд ≈$220, автобус ≈$48, Vinicunca ≈$70, Boleto ≈$90, остальное."},
+{id:"pe4",s:"pe",cat:"tr",l:"Такси и транспорт",b:100,flag:"pe",note:""},
+{id:"ec1",s:"ec",cat:"lo",l:"Жильё, 14 ночей",b:504,note:"≈$36 за ночь."},
+{id:"ec2",s:"ec",cat:"fo",l:"Еда",b:308,note:"Обед дня за $3–5 в местных кафе."},
+{id:"ec3",s:"ec",cat:"ac",l:"Котопакси, термы, Баньос, Миндо, Кито",b:340,note:""},
+{id:"ec4",s:"ec",cat:"tr",l:"Автобусы днём, такси из приложения, трансферы",b:220,note:"Ночью на автобусах не ездить."},
+{id:"gl1",s:"gl",cat:"ac",l:"Сбор нацпарка и карта транзита, на вас",b:220,note:"$200 + $20, платите наличными в аэропорту. Пелег как житель островов освобождён от сбора. Освобождение для жены или партнёра резидента уточните в Consejo de Gobierno de Galápagos до поездки."},
+{id:"gl2",s:"gl",cat:"ac",l:"Туры на день: Kicker Rock, Bartolomé и другие",b:520,note:"Три тура на двоих. Семья может подсказать местных гидов дешевле."},
+{id:"gl3",s:"gl",cat:"fo",l:"Еда и выходы",b:308,note:"Жильё у семьи бесплатно."},
+{id:"gl4",s:"gl",cat:"ot",l:"Подарки и вклад семье",b:120,note:""},
+{id:"bk1",s:"back",cat:"lo",l:"Транзит, 1 ночь, и Ереван, 3 ночи",b:245,note:""},
+{id:"bk2",s:"back",cat:"fo",l:"Еда",b:170,note:""},
+{id:"bk3",s:"back",cat:"tr",l:"Такси и трансферы",b:50,note:""},
+{id:"m1",s:"misc",cat:"ot",l:"Страховка с горами и эвакуацией, 90 дней",b:330,note:"Проверьте, что покрывает высоту 4000–5000 м."},
+{id:"m2",s:"misc",cat:"ot",l:"ESTA для США, двое",b:85,note:"$40,27 с человека, действует 2 года. Для израильских паспортов в остальных странах маршрута виза не нужна."},
+{id:"m3",s:"misc",cat:"ot",l:"Прививки и лекарства",b:200,note:"Жёлтая лихорадка и средство от горной болезни, подберите с врачом."},
+{id:"m4",s:"misc",cat:"ot",l:"eSIM и интернет",b:60,note:""},
+{id:"m5",s:"misc",cat:"ot",l:"Тёплая одежда и треккинговая обувь",b:150,note:"Холодные зимние ночи в Андах."}
+];
+const BS={fl:"Перелёты",la:"Лос-Анджелес",road:"Highway 1",sv:"Кремниевая долина",ar:"Аргентина",bo:"Боливия",pe:"Перу",ec:"Эквадор",gl:"Галапагос",back:"Дорога домой и Ереван",misc:"Подготовка"};
+const BC={fl:"Перелёты",lo:"Жильё",fo:"Еда",ac:"Входные и развлечения",tr:"Транспорт на месте",ot:"Прочее"};
+const BCC={fl:"#2b6cb0",lo:"#0b7a86",fo:"#d6502b",ac:"#8a5cc2",tr:"#b9780f",ot:"#6b7f88"};
+const MULT={e:{fl:.92,lo:.75,fo:.85,ac:.85,tr:.9,ot:.9},b:{fl:1,lo:1,fo:1,ac:1,tr:1,ot:1},c:{fl:1.35,lo:1.6,fo:1.3,ac:1.2,tr:1.3,ot:1.1}};
+// Отели: за ночь на двоих в долларах
+const HT=[
+{s:"la",n:3,w:"Голливуд или Санта-Моника",o:[["HI Los Angeles — Santa Monica (хостел, отдельные комнаты)","бюджет",110,160],["Magic Castle Hotel, Голливуд","мид",160,230],["Hilton Los Angeles/Universal City","комфорт",220,330]]},
+{s:"road",n:7,w:"Санта-Барбара, Морро-Бей, Биг-Сур, Монтерей, Санта-Круз",o:[["Кемпинг Pfeiffer Big Sur State Park (палатка)","бюджет",40,60],["Hotel Milo, Санта-Барбара","мид",190,300],["Embarcadero Inn, Морро-Бей","мид",140,220],["Big Sur River Inn","мид",200,330],["Hotel Abrego, Монтерей","мид",150,240]]},
+{s:"sv",n:14,w:"Дом тёти; Йосемити 2 ночи",o:[["Yosemite Bug Rustic Mountain Resort, Мидпайнс","бюджет",90,200],["Мотель в Марипозе","бюджет",120,200],["Yosemite Valley Lodge, внутри парка","комфорт",300,450]]},
+{s:"ar",n:3,w:"Буэнос-Айрес: Palermo или San Telmo",o:[["America del Sur Hostel, Сан-Тельмо","бюджет",40,70],["Hotel Pulitzer Buenos Aires","мид",90,150],["Home Hotel, Palermo","комфорт",200,330]]},
+{s:"ar",n:3,w:"Пуэрто-Игуасу, Аргентина",o:[["Marcopolo Inn (хостел)","бюджет",35,55],["Hotel Saint George","мид",60,100],["Gran Meliá Iguazú, внутри парка","комфорт",250,450]]},
+{s:"ar",n:3,w:"Мендоса",o:[["Апартаменты в центре","бюджет",45,70],["Hotel Diplomatic","мид",70,120],["Park Hyatt Mendoza","комфорт",230,350]]},
+{s:"ar",n:5,w:"Сальта (3 ночи) и Пурмамарка (2 ночи)",o:[["Хостел в Сальте","бюджет",30,50],["Hotel Salta","мид",80,130],["La Comarca, Пурмамарка","мид",70,110]]},
+{s:"bo",n:10,w:"Туписа 2, джип-тур 3, Уюни 1, Сукре 2, Ла-Пас 2",o:[["Hotel Mitru, Туписа","бюджет",35,55],["Hotel Jardines de Uyuni, Уюни","бюджет",40,70],["Luna Salada, соляной отель","мид",100,160],["Hostal Sucre","бюджет",35,55],["Parador Santa María la Real, Сукре","мид",90,140],["Hostal Naira, Ла-Пас","бюджет",30,50],["Hotel Rosario, Ла-Пас","мид",70,110]]},
+{s:"pe",n:12,w:"Копакабана, Пуно, Куско, Долина, Агуас-Кальентес, Арекипа, Лима",o:[["Hostal Pukara, Пуно","бюджет",30,50],["Pariwana Cusco (хостел)","бюджет",45,70],["Tierra Viva Cusco Plaza","мид",70,110],["Casa Andina Premium Valle Sagrado","мид",120,200],["Gringo Bill’s, Агуас-Кальентес","мид",60,100],["Casa Andina Standard Arequipa","мид",70,110],["Casa Andina Select Miraflores, Лима","мид",80,130]]},
+{s:"ec",n:14,w:"Кито 3, Миндо 1, Котопакси и Килотоа 3, Баньос 3, Риобамба 1, Куэнка 3",o:[["Secret Garden Quito (хостел)","бюджет",35,60],["Hotel Real Audiencia, Кито","мид",70,110],["Séptimo Paraíso, Миндо","мид",100,160],["Hostería La Ciénega, Котопакси","мид",80,130],["Black Sheep Inn, Чугчилян","мид",60,120],["Hostal Plantas y Blanco, Баньос","бюджет",35,55],["Samari Spa Resort, Баньос","комфорт",120,190],["Hostal Macondo, Куэнка","бюджет",45,70],["Hotel Santa Lucía, Куэнка","мид",110,170]]},
+{s:"gl",n:14,w:"У семьи, бесплатно",o:[["Жильё у семьи","бесплатно",0,0],["Подарки, продукты, ужины в благодарность","вклад",0,0]]},
+{s:"back",n:4,w:"Транзит и Ереван",o:[["Апартаменты в центре Еревана (Кентрон)","бюджет",45,75],["Отель в центре, у площади Республики","мид",80,140]]}
+];
+// когда, маршрут, как, в пути, $ с человека от, до (с одним чемоданом), заметка про багаж, статья бюджета
+const FL=[
+["20 мая","Тель-Авив → Лос-Анджелес (LAX)","EL AL без пересадок, или United, Lufthansa, British Airways с пересадкой","15–17 ч",700,1000,"EL AL Classic и Flex включают чемодан 23 кг, на тарифе Light его нет, +$105. Агрегаторы показывают для мая в среднем $850 за билет в одну сторону.","f1"],
+["23 мая","Лос-Анджелес → Сан-Франциско на машине","Аренда на 7 дней, возврат в SFO или SJC","≈1 000 км за неделю",0,0,"Это не перелёт: стоимость машины в строке «Highway 1» бюджета.",""],
+["13 июня","Сан-Франциско (SFO) → Буэнос-Айрес (EZE)","Через Даллас, Майами, Хьюстон, Панаму или Боготу: American, Delta, Copa, United","17–22 ч",520,800,"Агрегаторы показывают от $469 за билет в одну сторону. На базовых тарифах чемодан может быть платным, проверяйте перед оплатой.","f2"],
+["17 июня","Буэнос-Айрес (AEP) → Пуэрто-Игуасу (IGR)","Aerolíneas Argentinas, Flybondi, JetSMART","1 ч 50 мин",70,130,"На промо-тарифе Aerolíneas только ручная кладь, чемодан до 15 кг отдельно (в 2024 году 18 000 песо, сейчас дороже). У Flybondi и JetSMART багаж всегда отдельно.","f3"],
+["20 июня","Игуасу → Мендоса (MDZ) через Буэнос-Айрес","Aerolíneas, Flybondi","≈4–5 ч",100,180,"Прямых рейсов нет. В цену заложен чемодан.","f3"],
+["23 июня","Мендоса → Сальта (SLA) через Буэнос-Айрес","Aerolíneas","≈5–6 ч",100,180,"Рейсов мало, билет берите заранее.","f3"],
+["28 июня","Жужуй → Ла-Киака → Вильясон → Туписа","Автобус и пешком через границу","≈8–9 ч",15,35,"Входит в строку «Автобусы и такси» в Боливии. Проверьте открытие границы.",""],
+["3–4 июля","Уюни → Сукре","Автобус, дневной рейс","≈8 ч",15,30,"Входит в строку «Автобусы и такси» в Боливии.",""],
+["6 июля","Сукре (SRE) → Ла-Пас (LPB)","BoA, Amaszonas","1 ч",45,80,"Чемодан на внутренних рейсах Боливии обычно 23 кг, уточните.","f4"],
+["8 июля","Ла-Пас → Копакабана → Пуно","Автобус с пересечением границы","≈8 ч",15,30,"Остановка у Kasani, штамп в паспорте.","f5"],
+["11 июля","Пуно → Куско","Туристический автобус с остановками","≈7–8 ч",20,40,"","f5"],
+["15 июля","Куско → Агуас-Кальентес","Поезд PeruRail или Inca Rail","≈3,5 ч",90,150,"Цена входит в строку «Мачу-Пикчу, поезд» в Перу. Багаж в поезде ограничен 5 кг, остальное оставьте в отеле в Куско.",""],
+["17 июля","Куско → Арекипа","Ночной автобус или самолёт","10 ч или 1 ч",20,70,"","f5"],
+["19 июля","Арекипа → Лима (LIM)","LATAM, Sky Airline, JetSMART","1 ч 50 мин",50,100,"JetSMART продаёт багаж отдельно.","f5"],
+["20 июля","Лима → Кито (UIO)","LATAM, JetSMART без пересадок, Copa через Панаму","2 ч 20 мин",140,240,"Агрегаторы: от ₪366 за билет без багажа, обычно ₪380–680. Июль — дорогой месяц, багаж добавьте.","f6"],
+["3 августа","Куэнка (CUE) → Кито (UIO)","Avianca, LATAM","45 мин",40,80,"Автобусом — 9–10 часов.","f7"],
+["3 августа","Кито → Галапагос (Baltra GPS или San Cristóbal SCY) → Кито","LATAM, Avianca","≈3 ч 30 мин в одну сторону",480,600,"Цена туда и обратно, лето — высокий сезон. Багаж 23 кг и ручная кладь 8 кг. Если рейс через Гуаякиль, оставайтесь в самолёте.","f8"],
+["в течение пребывания","Лодки между островами Санта-Крус, Исабела, Сан-Кристобаль","Скоростные катера","≈2 ч",25,35,"Билет покупают за день, возьмите таблетки от укачивания. В бюджете три перехода.",""],
+["17 августа","Галапагос → Кито → Мадрид или Стамбул → Ереван (EVN)","Air Europa, Iberia, KLM, Turkish с пересадками","25–30 ч",750,1150,"Билет Кито — Ереван (перелёт с Галапагосов в цене рейса туда и обратно). Август — высокий сезон, на агрегаторах из Кито в Стамбул медиана за август около $1 840 туда и обратно. С пересадкой можно устроить 1 день в Мадриде или Стамбуле.","f10"],
+["после 22 августа","Ереван → Тель-Авив","Israir, Arkia или El Al, часто с пересадкой","≈3–4 ч",90,200,"Если домой. Багаж проверяйте у перевозчика.","f11"]
+];
+// суммы по статьям бюджета берём из таблицы: $ на двоих = (от + до) пополам × 2
+{const FB={};FL.forEach(f=>{if(f[7])FB[f[7]]=(FB[f[7]]||0)+f[4]+f[5]});B.forEach(x=>{if(FB[x.id]!=null)x.b=Math.round(FB[x.id])})}
+
+const NR=[
+{s:"la",t:"Рядом с Лос-Анджелесом",i:[["Joshua Tree","2,5 ч","Парк с гранитными валунами и ночным небом, можно устроить закат и звёзды. Летом жарко, в мае ещё мягко."],["Остров Санта-Каталина","1 ч на пароме","Бухты, бизоны и сноркелинг, возьмите день."],["Сан-Диего и Ла-Холья","2 ч","Морские львы, пещеры и пляжи, рыбные тако."]]},
+{s:"road",t:"По дороге на север",i:[["Hearst Castle","в Сан-Симеоне","Дворец на холме, экскурсия около часа."],["Пасо-Роблес","40 мин от побережья","Винодельни и дегустации без толп."],["Pinnacles","1,5 ч от Монтерея","Национальный парк со скалами и кондорами."]]},
+{s:"sv",t:"Рядом с тётей",i:[["Напа и Сонома","1,5 ч","Дегустации, Калистога и грязевые ванны."],["Point Reyes","1,5 ч","Дикий берег, маяк и стада лосей."],["Big Basin и секвойи Санта-Круз","45 мин","Секвойи без толп и морские львы на пирсе."],["Озеро Тахо","4 ч","Эмеральд-Бей и горные тропы."]]},
+{s:"ar",t:"Рядом с маршрутом по Аргентине",i:[["Колония-дель-Сакраменто (Уругвай)","1 ч на катере из Буэнос-Айреса","Старый портовый город, вечер, ужин у воды."],["Тигре и дельта Параны","1 ч на электричке","Лодки, острова и воскресный рынок."],["Дорога на Чили и Cristo Redentor","из Мендосы, 3,5 ч","Горная граница, если откроют перевал."],["Кафаяте и долина Кальчаки","из Сальты, 3–4 ч","Вина торронтес и Кильмес."],["Патагония: Эль-Калафате и Барилоче","2,5–3 ч полёта","Зимой холодно, но ледник Перито-Морено хорош без толп."]]},
+{s:"bo",t:"Рядом с Боливией",i:[["Потоси и Cerro Rico","из Уюни, 4 ч","Шахты и город на высоте 4090 м. Идите с проводником."],["Руренабаке и Мадиди","45 мин лёта из Ла-Паса","Джунгли и пампа на 3 дня."],["Тиванаку","из Ла-Паса, 1,5 ч","Руины доинкской цивилизации."],["Чакалтая","из Ла-Паса, 1 ч","Смотровая на 5400 м."]]},
+{s:"pe",t:"Рядом с Куско и Арекипой",i:[["Humantay Lake","из Куско, 3 ч","Бирюзовое озеро под ледником на 4200 м."],["Каньон Колка и источники La Calera","из Арекипы, 3 ч","Кондоры утром и тёплые источники вечером."],["Ollantaytambo","в Священной долине","Крепость и последняя деревня перед поездом."],["Palcoyo","из Куско, 3 ч","Менее людная альтернатива Vinicunca."]]},
+{s:"ec",t:"Рядом с Эквадором",i:[["Отавало и Куикоча","из Кито, 2 ч","Рынок в субботу и озеро в кратере."],["Ingapirca","из Куэнки, 1,5 ч","Крупнейшие инкские руины Эквадора."],["Амазония около Мисауальи","из Баньоса, 3–4 ч","Лодки по реке и джунгли."],["Дальняя Амазония: не ехать самим","—","Дальние районы Амазонии без охраны и с осторожностью."]]},
+{s:"gl",t:"Галапагос",i:[["Флореана","1 день с Санта-Круса","Почтовая бочка и пляж с розовыми фламинго."],["Isla Lobos","из Сан-Кристобаля, 30 мин","Колония морских львов и сноркелинг с щенками."],["Gardner Bay","из Сан-Кристобаля","Белый пляж с морскими львами."],["Seymour Norte","с Санта-Круса","Голубоногие олуши и фрегаты."]]},
+{s:"back",t:"На обратном пути к 22 августа",i:[["Стамбул","1–2 дня","Хаммам Çemberlitaş и вид на Босфор."],["Мадрид","1–2 дня","Музей Прадо и ужин поздно вечером."],["Тбилиси: серные бани","из Еревана 1 ч на самолёте","Бани в районе Абанотубани."],["Севан и Гарни","из Еревана, 1–1,5 ч","Озеро на 1900 м, храм и монастырь."]]}
+];
+/* ---------- погода и вещи ---------- */
+// этап, даты, днём, ночью, что важно, во что одеваться
+const WX=[
+["Лос-Анджелес","20–23 мая","21–24 °C","14–16 °C","Утром часто туман «May Gray», дождей почти нет, океан ≈17 °C. В Universal жарко на солнце.","Футболки, лёгкая кофта на вечер, кепка, крем SPF 50, удобные кроссовки: в парке 15–20 тысяч шагов."],
+["Highway 1","23–30 мая","14–20 °C","8–11 °C","Туман и сильный ветер на побережье, в Биг-Суре заметно холоднее, чем в Лос-Анджелесе. Воздух прогревается к обеду.","Лёгкая куртка, флис, ветровка, закрытая обувь. Купальник для бочек в Авиле и для Эсалена."],
+["Кремниевая долина и Сан-Франциско","30 мая – 13 июня","24–28 °C в Сан-Хосе, 15–19 °C в Сан-Франциско","10–13 °C","В Сан-Франциско летом туман и ветер, в Кремниевой долине жарко и сухо. Йосемити: днём 18–26 °C, ночью 3–8 °C, водопады полные.","Слои: футболка, флис, ветровка. Для Mist Trail нужен дождевик и обувь с рифлёной подошвой."],
+["Аргентина","14–28 июня, зима","Буэнос-Айрес 8–16 °C, Игуасу 14–23 °C, Мендоса 1–15 °C, Сальта 3–21 °C","Мендоса и Сальта около 0 °C, возможен заморозок","Зима: сухо и солнечно на севере и в Андах, в Буэнос-Айресе пасмурно и сыро. В Игуасу влажно, водопады полные.","Тёплая куртка, термобельё для Мендосы и Сальты, шапка. Для Игуасу лёгкий дождевик и быстросохнущие вещи."],
+["Боливия","28 июня – 8 июля, зима","Туписа 0–17 °C, Уюни 12–18 °C, Сукре 8–22 °C, Ла-Пас 0–16 °C","Уюни от −10 до −5 °C, Ла-Пас около 0 °C","Высота 3 600–4 700 м, солнце очень злое, ночи ледяные, в хостелах и на джип-туре отопления почти нет.","Термобельё, флис, пуховик, шапка, перчатки, шерстяные носки, очки категории 4, крем SPF 50, налобный фонарь, вкладыш в спальник."],
+["Перу","8–20 июля","Титикака 15–17 °C, Куско 0–19 °C, Мачу-Пикчу 10–23 °C, Арекипа 6–22 °C, Лима 15–19 °C","Титикака от −2 до 0 °C, Куско около 0 °C","Сухой сезон: в горах солнечно и холодно по ночам, на Мачу-Пикчу утром туман, в Лиме серая дымка.","Слои как в Боливии, дождевик на всякий случай, кроссовки или ботинки с хорошей подошвой для ступеней инков."],
+["Эквадор","20 июля – 3 августа","Кито 9–20 °C, Котопакси и Килотоа 3–12 °C, Баньос 14–24 °C, Миндо 15–24 °C, Куэнка 8–20 °C","Котопакси около 0–3 °C, Кито 9–10 °C","Погода меняется за час: утром солнце, днём дождь, вечером холод. Сезон ветров на высоте.","Лёгкая куртка и пуховик в слоях, дождевик, репеллент в Миндо и Баньосе, купальник для терм."],
+["Галапагос","3–17 августа","Воздух 20–26 °C, вода 18–22 °C","18–20 °C","Прохладный сезон: серая дымка гаруа, ветер на лодках, вода холодная, без гидрокостюма сноркелинг короткий.","Купальники, рашгард с длинным рукавом, флис и ветровка на лодке, шляпа, крем с минеральным фильтром, таблетки от укачивания. Гидрокостюм можно арендовать."],
+["Ереван","17–22 августа","30–38 °C","18–22 °C","Сухая жара, фестиваль на открытом воздухе, ночью прохладнее.","Лёгкая одежда, кепка, вода, один нарядный вариант для вечера."]
+];
+// разделы списка вещей: название, пояснение, предметы
+const PK=[
+{t:"Документы и деньги",d:"Положите в ручную кладь, дубли в облаке и у партнёра.",i:[
+"Загранпаспорта: срок не меньше 6 месяцев после въезда, свободные страницы для штампов",
+"ESTA для США на каждого, заранее. Остальные страны по израильским паспортам без виз; у Пелега эквадорский паспорт и документ жителя Галапагосов",
+"Страховка с покрытием высоты 4 000–5 000 м, походов и эвакуации: полис и номер горячей линии на телефоне и в бумаге",
+"Две банковские карты разных систем и банков, часть денег на второй карте у партнёра",
+"Наличные доллары новыми купюрами без пометок: Боливия, Эквадор, Галапагосы (сбор $200 и $20 на человека платят наличными)",
+"Права и международные права для аренды машины в США",
+"Бронь отелей и обратный билет для въезда на Галапагосы, распечатки с QR-кодами",
+"Международный сертификат о прививке от жёлтой лихорадки, если потребуется по маршруту",
+"Фото паспортов и страховки в облаке и в почте"]},
+{t:"Одежда: базовые слои",d:"На 3 месяца хватит одной смены на 7–8 дней, стирайте каждые 7–10 дней. Брать в расчёте на слои, а не на каждую погоду.",i:[
+"Футболки быстросохнущие или мериносовые, 5 штук",
+"Рубашка с длинным рукавом от солнца и комаров, 1–2 штуки",
+"Термобельё, верх и низ, мериносовое: Уюни, Титикака, Котопакси, Мендоса",
+"Флис или лёгкий пуловер, 1–2 штуки",
+"Лёгкий пуховик, сжимающийся в мешочек: Боливия, Куско, Кито, вечера в Сан-Франциско",
+"Мембранная куртка от дождя и ветра: Биг-Сур, Игуасу, Мачу-Пикчу, Галапагос",
+"Трекинговые брюки или лёгкие штаны, 2 пары",
+"Джинсы или тёмные брюки для городов, 1 пара",
+"Шорты, 2 пары",
+"Бельё на 8 дней",
+"Носки шерстяные, 3 пары, и обычные, 4 пары",
+"Шапка, перчатки и бафф: Уюни и вулканы",
+"Кепка или шляпа с полями, очки категории 3–4 (на высоте обязательны)"]},
+{t:"Для вечеров и тусовок",d:"Чтобы не краснеть в барах и на фестивале в Ереване.",i:[
+"Одна нарядная вещь для вечера: платье или рубашка и тёмные брюки",
+"Лёгкая закрытая обувь для бара и милонги, не только кроссовки",
+"Небольшая сумка через плечо с молнией: на улице в городах Южной Америки не держите телефон в руках"]},
+{t:"Обувь",d:"Всего три пары, остальное обычно лишний вес.",i:[
+"Трекинговые ботинки или кроссовки с жёсткой подошвой, уже разношенные",
+"Лёгкие кроссовки на каждый день",
+"Сланцы или шлёпанцы для бань, термальных источников и пляжей"]},
+{t:"Бани, термы и вода",d:"Бани и бочки — одна из главных идей поездки.",i:[
+"Купальники, 2 штуки каждому",
+"Быстросохнущее лёгкое полотенце",
+"Водонепроницаемый мешок для телефона и документов",
+"Рашгард с длинным рукавом для Галапагосов",
+"Маска и трубка по желанию, ласты и гидрокостюм можно арендовать на месте",
+"Шапочка или резинка для волос в банях"]},
+{t:"Для гор и походов",d:"Походы в Йосемити, Сальте, Уюни, Мачу-Пикчу, Котопакси.",i:[
+"Рюкзак 20–30 л для дневных выходов",
+"Складные трекинговые палки, едут в чемодане",
+"Налобный фонарь с запасными батарейками",
+"Фляга 1 литр и таблетки или фильтр для воды",
+"Солнцезащитный крем SPF 50 и гигиеническая помада с фильтром",
+"Химические грелки, 6–8 штук: Уюни, ночи на 4 000 м",
+"Вкладыш в спальник или лёгкий спальник для холодных хостелов",
+"Дождевик-пончо",
+"Офлайн-карты Organic Maps или AllTrails, часы или телефон с GPS для трекера"]},
+{t:"Техника",d:"Лучше один набор на двоих и общий повербанк.",i:[
+"Телефоны и зарядки, повербанк до 20 000 мАч только в ручную кладь",
+"Универсальный адаптер: США и Эквадор — тип A/B, Аргентина — C/I, Перу — A/C, Армения — C/F",
+"eSIM или местные сим-карты, офлайн-переводчик",
+"Камера или экшн-камера, карты памяти",
+"Наушники и кабель-замок для рюкзака",
+"Замки на чемодан с TSA"]},
+{t:"Аптечка",d:"Лекарства от горной болезни и желудка в горах Южной Америки нужны почти всем. Подбирайте с врачом.",i:[
+"От горной болезни по рецепту врача",
+"Обезболивающее, жаропонижающее, антигистаминное",
+"От расстройства желудка, регидрон, активированный уголь",
+"Пластыри от мозолей и антисептик",
+"От укачивания для лодок Галапагоса",
+"Репеллент с ДЭТА 30% для Миндо и джунглей",
+"Личные лекарства по рецепту в оригинальных упаковках"]},
+{t:"Не брать или купить на месте",d:"Что обычно оказывается лишним в чемодане.",i:[
+"Дрон: запрещён в Мачу-Пикчу и во многих национальных парках",
+"Дорогие украшения и крупные суммы наличных на улице",
+"Больше трёх пар обуви и тяжёлые джинсы",
+"Тёплые вещи можно купить в Боливии и Перу дешево: свитера из альпаки",
+"Шампунь и гели: берите маленькие флаконы, остальное купите на месте"]}
+];
+const PKTIPS=["Вес: один чемодан до 23 кг на каждого плюс ручная кладь до 8 кг. На внутренних рейсах Aerolíneas Argentinas на промо-тарифе чемодан до 15 кг платный, поэтому в Аргентину лучше собраться так, чтобы чемодан весил около 15 кг.","У тёти в Кремниевой долине две недели: постирайте всё, перепакуйте чемодан и отправьте домой или оставьте лишнее.","Пакуйте по слоям: футболка, флис, пуховик, дождевик. Эти четыре слоя закрывают погоду от пляжа до Уюни."];
+
+// страна, на вас (израильский паспорт), Пелег, заметка
+const VISA=[
+["США","ESTA: $40,27, заявка на сайте CBP, действует 2 года, до 90 дней за раз. Нужен биометрический паспорт.","Израильский паспорт, тоже ESTA. По эквадорскому паспорту нужна виза, поэтому летите по израильскому.","Подавайте за 1–2 месяца до вылета, а не в аэропорту. Заявку заполняйте только на официальном сайте esta.cbp.dhs.gov: платные посредники берут лишнее."],
+["Аргентина","Без визы, до 90 дней.","Без визы, израильский паспорт.","Паспорт действителен не меньше 6 месяцев."],
+["Боливия","Без визы, до 90 дней. Правило действует с 1 декабря 2025.","Так же, по израильскому паспорту.","Правила Боливии меняются часто. Проверьте за месяц до поездки на сайте МИД Израиля. Вход сухопутный через Вильясон, возьмите распечатку брони и обратный билет."],
+["Перу","Без визы, по моим данным до 183 дней, остальное проверьте.","Так же, по израильскому паспорту.","Официальный источник открыть не удалось, проверьте срок на сайте МИД Перу."],
+["Эквадор","Без визы, до 90 дней. У вас 28 дней, запас большой.","Гражданин Эквадора: въезжает и выезжает по эквадорскому паспорту или cédula.","Пелег должен вылетать из Эквадора по эквадорскому документу, а в Армению въезжать по израильскому: возьмите оба паспорта и спросите авиакомпанию при регистрации."],
+["Галапагос","Иностранный турист: сбор $200 и карта транзита TCT $20, наличными. Форма биосертификации за 48–72 часа до рейса.","Житель Галапагосов: от сбора освобождён. Возьмите подтверждение резидентства.","Нужны подтверждение жилья, обратный билет, паспорт со сроком больше 6 месяцев. Узнайте у семьи Пелега, подходит ли вам льгота как партнёру жителя: официальных данных я не нашёл."],
+["Армения","Без визы, по моим данным до 180 дней, остальное проверьте.","Так же, по израильскому паспорту.","Билеты на фестиваль 22 августа: поездка короткая, запаса хватает."]
+];
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const MON=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+const addDays=(iso,n)=>{const d=new Date(iso+"T12:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d};
+const dm=d=>d.getUTCDate()+" "+MON[d.getUTCMonth()];
+const range=(iso,n)=>{const a=addDays(iso,0),b=addDays(iso,n);return a.getUTCMonth()==b.getUTCMonth()?a.getUTCDate()+"–"+dm(b):dm(a)+" – "+dm(b)};
+const nf=new Intl.NumberFormat("ru-RU");
+const ils=v=>nf.format(Math.round(v/10)*10)+" ₪";
+const usd=v=>"$"+nf.format(Math.round(v));
+const gmap=q=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q);
+const gimg=q=>"https://www.google.com/search?tbm=isch&q="+encodeURIComponent(q);
+const stageOf=id=>ST.find(x=>x.id===id);
+function toast(t){const e=$("#toast");e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,3500)}
+/* ---------- рисованные картинки ---------- */
+function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function rnd(seed){let a=hash(seed);return()=>{a=(a+0x6D2B79F5)|0;let t=Math.imul(a^a>>>15,1|a);t=(t+Math.imul(t^t>>>7,61|t))^t;return((t^t>>>14)>>>0)/4294967296}}
+const SK={mountain:["#16294d","#f4a261","#ffe8b8"],volcano:["#2a1b3d","#ff8a5b","#ffd29a"],salar:["#6fb0e6","#f4f1e8","#fff7d6"],coast:["#2b6ea6","#f9c784","#fff0c4"],road:["#4a76a8","#f7c59f","#fff1c9"],forest:["#1d4e3a","#a8d5a2","#e9f5c9"],canyon:["#b8512e","#f6c28b","#fff0cf"],lake:["#2b4c7e","#bfe3ee","#fff3d3"],falls:["#2f6b4f","#b7e2c6","#ffffff"],city:["#243b6b","#f08a5d","#ffd8a8"],spa:["#0e1d3a","#3a4f8a","#d9e4ff"],night:["#140d2b","#4a1d5c","#ff4d8d"],ruins:["#4c6a9a","#f1b977","#fff0c8"],island:["#1b6ca8","#9be0e8","#fff6c9"],vineyard:["#3b6aa5","#f4c57e","#fff0c2"]};
+function ridge(r,base,amp,n,fill,snow){let pts=[];for(let i=0;i<=n;i++)pts.push([i*400/n,base-r()*amp]);let d="M0 240 L"+pts.map(p=>p[0].toFixed(0)+" "+p[1].toFixed(0)).join(" L")+" L400 240Z";let o=`<path d="${d}" fill="${fill}"/>`;if(snow){pts.slice().sort((a,b)=>a[1]-b[1]).slice(0,3).forEach(p=>{o+=`<path d="M${p[0]-13} ${p[1]+15} L${p[0]} ${p[1]} L${p[0]+13} ${p[1]+15}Z" fill="#fff" opacity=".85"/>`})}return o}
+const BODY={
+mountain:(r)=>ridge(r,150,80,9,"#4d6a9c",1)+ridge(r,180,60,8,"#34507f")+ridge(r,212,45,7,"#1f3556"),
+volcano:(r)=>`<path d="M200 62 L330 214 L70 214Z" fill="#4a3358"/><path d="M200 62 L228 130 L172 130Z" fill="#6b4a7a"/><ellipse cx="204" cy="48" rx="26" ry="12" fill="#fff" opacity=".35"/><ellipse cx="218" cy="30" rx="30" ry="12" fill="#fff" opacity=".22"/>`+ridge(r,205,30,10,"#22152c"),
+salar:(r)=>ridge(r,130,24,16,"#8a7aa0")+`<rect y="130" width="400" height="110" fill="#f7f5ee"/><rect y="130" width="400" height="60" fill="#8cc3ee" opacity=".35"/>`+[...Array(9)].map((_,i)=>`<path d="M200 130 L${-120+i*80} 240" stroke="#c9c6bb" stroke-width="1.4" fill="none"/>`).join("")+[...Array(5)].map((_,i)=>`<path d="M0 ${150+i*i*6+i*8} H400" stroke="#d6d3c8" stroke-width="1" fill="none"/>`).join(""),
+coast:(r)=>`<rect y="140" width="400" height="100" fill="#1d6fa8"/>`+[...Array(7)].map((_,i)=>`<path d="M0 ${150+i*13} q25 -7 50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0" stroke="#d8f0fa" stroke-width="2" fill="none" opacity=".55"/>`).join("")+`<path d="M0 240 L0 120 Q40 112 90 150 L120 240Z" fill="#6b4b36"/><path d="M0 240 L0 160 Q40 150 70 190 L90 240Z" fill="#4e3626"/>`,
+road:(r)=>ridge(r,125,50,9,"#5f7fa8")+`<rect y="140" width="170" height="100" fill="#2f74aa" opacity=".8"/><path d="M185 130 L215 130 L360 240 L40 240Z" fill="#3b3f48"/><path d="M200 132 V240" stroke="#f5e27a" stroke-width="3" stroke-dasharray="10 12"/><path d="M0 240 L0 150 Q60 140 120 190 L150 240Z" fill="#5f7a3e"/>`,
+forest:(r)=>{let o=ridge(r,150,40,8,"#3c7c5a");for(let l=0;l<3;l++){for(let i=0;i<14;i++){const x=r()*420-10,h=60+r()*60+l*14,y=235-l*18;o+=`<path d="M${x} ${y} L${x-17-l*3} ${y} L${x} ${y-h} L${x+17+l*3} ${y}Z" fill="${["#2e6d4a","#235a3d","#17402c"][l]}"/>`}}return o},
+canyon:(r)=>{const cols=["#d0764a","#b8512e","#9c3d24","#7c2c1a"];let o="";cols.forEach((c,i)=>{let d="M0 240 L0 "+(110+i*35),x=0;while(x<400){x+=20+r()*40;d+=` L${x.toFixed(0)} ${(110+i*35-r()*28).toFixed(0)} L${(x+10).toFixed(0)} ${(110+i*35-r()*28).toFixed(0)}`}o+=`<path d="${d} L400 240Z" fill="${c}"/>`});return o},
+lake:(r)=>{const g=ridge(r,115,70,9,"#3f5f93",1);return g+`<rect y="130" width="400" height="110" fill="#2a5f86"/><g transform="translate(0 260) scale(1 -1)" opacity=".45">${ridge(r,115,70,9,"#3f5f93")}</g><rect y="130" width="400" height="110" fill="#3b79a3" opacity=".35"/>`+ridge(r,235,20,12,"#2c4a3a")},
+falls:(r)=>`<path d="M0 240 V30 Q70 40 120 100 V240Z" fill="#285a41"/><path d="M400 240 V20 Q330 40 290 100 V240Z" fill="#285a41"/><rect x="150" y="30" width="100" height="160" fill="#eaf6f3" opacity=".95"/>`+[...Array(7)].map((_,i)=>`<rect x="${156+i*14}" y="30" width="5" height="160" fill="#fff" opacity="${.5+r()*.5}"/>`).join("")+`<ellipse cx="200" cy="195" rx="85" ry="22" fill="#fff" opacity=".7"/><path d="M0 240 V210 Q120 190 200 215 Q300 190 400 210 V240Z" fill="#1b4a35"/>`,
+city:(r)=>{let o="";for(let l=0;l<2;l++){let x=-5;while(x<400){const w=22+r()*30,h=50+r()*(l?70:100);o+=`<rect x="${x}" y="${240-h}" width="${w}" height="${h}" fill="${l?"#2b3a63":"#1a2542"}"/>`;if(l==1){for(let k=0;k<6;k++)o+=`<rect x="${x+4+(k%3)*8}" y="${240-h+8+Math.floor(k/3)*14}" width="4" height="6" fill="#ffd877" opacity=".85"/>`}x+=w+2}}return o},
+spa:(r)=>[...Array(40)].map(()=>`<circle cx="${r()*400}" cy="${r()*110}" r="${.5+r()*1.2}" fill="#fff" opacity=".8"/>`).join("")+ridge(r,150,50,8,"#111f3d")+`<ellipse cx="200" cy="205" rx="150" ry="28" fill="#3fb6c9"/><ellipse cx="200" cy="200" rx="150" ry="24" fill="#74d6e2" opacity=".6"/>`+[...Array(6)].map((_,i)=>`<circle cx="${110+i*36+r()*10}" cy="${160-r()*20}" r="${18+r()*14}" fill="#fff" opacity=".16"/>`).join(""),
+night:(r)=>[...Array(22)].map(()=>`<circle cx="${r()*400}" cy="${30+r()*150}" r="${8+r()*26}" fill="${["#ff4d8d","#59d1ff","#ffbd3d","#9b6bff"][Math.floor(r()*4)]}" opacity="${.18+r()*.3}"/>`).join("")+`<rect y="188" width="400" height="52" fill="#0b0719"/><rect y="186" width="400" height="5" fill="#ff4d8d" opacity=".8"/>`+[...Array(5)].map((_,i)=>`<path d="M${60+i*74} 186 l9 -26 h14 l9 26Z" fill="#ffffff" opacity=".35"/>`).join(""),
+ruins:(r)=>ridge(r,95,60,7,"#587a54")+ridge(r,140,30,8,"#6f9462")+[...Array(6)].map((_,i)=>`<path d="M${30+i*18} ${215-i*12} H${370-i*18} V${203-i*12} H${30+i*18}Z" fill="${i%2?"#7ea36d":"#8bb078"}"/>`).join("")+`<rect x="150" y="150" width="30" height="16" fill="#b9ad98"/><rect x="215" y="140" width="24" height="14" fill="#b9ad98"/>`,
+island:(r)=>`<rect y="150" width="400" height="90" fill="#1a8cb5"/><path d="M80 170 Q120 100 170 150 Q205 90 260 155 Q300 130 330 170Z" fill="#355a3a"/><path d="M40 240 V210 Q200 190 360 210 V240Z" fill="#e8d9a8"/>`+[...Array(3)].map(()=>`<path d="M${60+r()*280} ${40+r()*40} q6 -7 12 0 q6 -7 12 0" stroke="#fff" stroke-width="2" fill="none"/>`).join(""),
+vineyard:(r)=>ridge(r,120,50,8,"#6c8fbf")+`<path d="M0 135 H400 V240 H0Z" fill="#8fae52"/>`+[...Array(12)].map((_,i)=>`<path d="M200 135 L${-300+i*90} 240" stroke="#4d6b2c" stroke-width="3" fill="none"/>`).join("")
+};
+function art(kind,seed){const r=rnd(kind+seed),c=SK[kind]||SK.mountain,id="g"+hash(seed+kind);const dark=kind==="spa"||kind==="night";
+ let s=`<svg viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(seed)}"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c[0]}"/><stop offset="1" stop-color="${c[1]}"/></linearGradient></defs><rect width="400" height="240" fill="url(#${id})"/>`;
+ if(!dark)s+=`<circle cx="${(60+r()*280).toFixed(0)}" cy="${(36+r()*40).toFixed(0)}" r="${(15+r()*10).toFixed(0)}" fill="${c[2]}" opacity=".92"/>`;
+ return s+(BODY[kind]||BODY.mountain)(r)+"</svg>"}
+/* ---------- состояние: общее через db, запасное в браузере ---------- */
+const S={checks:{},actuals:{},opts:{sc:"e",pe:true,rate:RATE0},db:null};
+const LS={get(k){try{return JSON.parse(localStorage.getItem("tr27_"+k)||"null")}catch(e){return null}},set(k,v){try{localStorage.setItem("tr27_"+k,JSON.stringify(v))}catch(e){}}};
+Object.assign(S.checks,LS.get("checks")||{});Object.assign(S.actuals,LS.get("actuals")||{});Object.assign(S.opts,LS.get("opts")||{});
+const chain={};
+function save(name,key,val){LS.set(name,S[name]);if(!S.db)return;
+ chain[name]=(chain[name]||Promise.resolve()).then(async()=>{const ref=S.db.doc("trip/"+name);try{await ref.update({m:{[key]:val}})}catch(e){try{await ref.set({m:{[key]:val}})}catch(e2){toast("Общее сохранение недоступно, записано на этом устройстве")}}})}
+async function initDb(){try{const db=await window.claude?.use?.("db");if(!db)return;S.db=db;
+ for(const name of ["checks","actuals","opts"]){db.doc("trip/"+name).onSnapshot(s=>{if(!s.exists)return;const m=s.data().m||{};Object.assign(S[name],m);LS.set(name,S[name]);if(name==="checks"){updateHikes();updatePack()}else if(!document.activeElement||!document.activeElement.closest("#t-budget input"))renderBudget()},()=>{})}
+ subPhotos(db)}catch(e){}}
+/* ---------- шапка ---------- */
+function header(){
+ const days=Math.ceil((new Date("2027-05-20T00:00:00")-new Date())/864e5);$("#count").textContent=days>0?"до вылета "+days+" дн.":"в пути";
+ const tot=ST.reduce((a,x)=>a+x.n,0);
+ $("#strip").innerHTML=ST.map(x=>`<button class="seg${x.free?" free":""}" type="button" style="flex:${x.n} 1 0;background:${x.free?"":CC[x.c][1]}" data-go="${x.id}" title="${esc(x.name)}, ${range(x.from,x.n)}"><b>${x.short}</b><span>${x.n} н</span></button>`).join("");
+ $("#strip").onclick=e=>{const b=e.target.closest("[data-go]");if(!b)return;go("route");const el=$("#st-"+b.dataset.go);if(el)el.scrollIntoView({behavior:"smooth",block:"center"})};
+ $("#legend").innerHTML=Object.entries(CC).filter(([k])=>k!=="am").map(([k,v])=>`<span><i class="dot" style="background:${v[1]}"></i>${v[0]}</span>`).join("")+`<span class="mono">${tot} дн. до 22 августа</span>`;
+}
+const TABS=[["route","Маршрут"],["places","Места"],["hikes","Походы"],["budget","Бюджет"],["hotels","Отели"],["flights","Перелёты"],["pack","Вещи"],["near","Рядом"],["photos","Альбом"]];
+function go(id){TABS.forEach(([k])=>{$("#t-"+k).hidden=k!==id});document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.t===id));try{history.replaceState(null,"","#"+id)}catch(e){}scrollTo(0,0);LS.set("tab",id)}
+function tabs(){$("#tabs").innerHTML=TABS.map(([k,v])=>`<button role="tab" type="button" data-t="${k}" aria-selected="false">${v}</button>`).join("");$("#tabs").onclick=e=>{const b=e.target.closest("button");if(b)go(b.dataset.t)}}
+/* ---------- маршрут ---------- */
+function renderRoute(){
+ const deadlines=[["как только откроются продажи, обычно в начале года","Билеты на Мачу-Пикчу и поезд до Агуас-Кальентес"],["февраль — март","Перелёты Тель-Авив — Лос-Анджелес, Сан-Франциско — Буэнос-Айрес, Кито — Ереван; отели в Биг-Суре на 29–31 мая; прививки"],["апрель","Universal Studios, Алькатрас, Йосемити, парковка Muir Woods"],["апрель — май","Тур Туписа — Уюни, ночь в соляном отеле, Galápagos: билеты Кито — острова"],["за 3–4 недели","Столик в Don Julio, милонга, концерты в Сальте, термы Папальтачта"],["за месяц","Страховка, проверка границы в Вильясоне, сборы и форма Галапагосов (48–72 часа до рейса)"]];
+ $("#t-route").innerHTML=`<div><h2>Маршрут</h2><p class="lead">94 дня: 20 мая — 22 августа. Лос-Анджелес три дня (два дня Universal и один на прогулки), потом неделя по побережью до Сан-Франциско и две недели у тёти. Три перелёта через океан и один через континент, остальное по земле. Перу вставлено в свободные 12 дней между Боливией и Эквадором, его можно отключить на вкладке «Бюджет».</p></div>`+
+ ST.map(x=>{const cnt=P.filter(p=>p[0]===x.c&&(x.id==="back"?false:true)&&(x.c!=="ar"&&x.c!=="us"?true:(x.c==="us"?p[1]===x.id:true))).length;
+ const cn=x.id==="back"?0:cnt;
+ return `<div class="stage" id="st-${x.id}" style="--c:${CC[x.c][1]}"><div class="row"><h3>${esc(x.name)}</h3><span class="pill">${range(x.from,x.n)} · ${x.n} ${x.free?"дн.":"ноч."}</span></div><p>${esc(x.sum)}</p>${cn?`<div><button class="btn" type="button" data-pl="${x.id}">Места этапа (${cn})</button></div>`:""}</div>`}).join("")+
+ `<div><h2>Когда что бронировать</h2></div><div class="tw"><table><thead><tr><th>Срок</th><th>Что</th></tr></thead><tbody>${deadlines.map(d=>`<tr><td>${d[0]}</td><td>${d[1]}</td></tr>`).join("")}</tbody></table></div>`;
+ $("#t-route").onclick=e=>{const b=e.target.closest("[data-pl]");if(!b)return;const x=stageOf(b.dataset.pl);PF.c=x.c;PF.st=(x.c==="us"?x.id:"");PF.t="";renderPlaces();go("places")}
+}
+/* ---------- места ---------- */
+const PF={c:"",t:"",st:""};
+function renderPlaces(){
+ const list=P.filter(p=>(!PF.c||p[0]===PF.c)&&(!PF.t||p[3].includes(PF.t))&&(!PF.st||p[1]===PF.st));
+ $("#t-places").innerHTML=`<div><h2>Места</h2><p class="lead">${P.length} мест: виды, природа, бани и термы, бары, еда и развлечения. На картинках стилизованные рисунки, настоящие фото открываются кнопкой «Фото». Цены ориентировочные в шекелях, проверяйте за месяц до поездки.</p></div>
+ <div class="chips" id="fc">${[["","Все страны"],...Object.entries(CC).filter(([k])=>k!=="am").map(([k,v])=>[k,v[0]])].map(([k,v])=>`<button type="button" class="chip" aria-pressed="${PF.c===k}" data-c="${k}">${v}</button>`).join("")}</div>
+ <div class="chips" id="ft">${[["","Любые"],...Object.entries(TYPES)].map(([k,v])=>`<button type="button" class="chip" aria-pressed="${PF.t===k}" data-t="${k}">${v}</button>`).join("")}</div>
+ ${PF.st?`<div class="note">Показан этап: ${esc(stageOf(PF.st).name)}. <button class="chip" type="button" data-clr="1">Показать все</button></div>`:""}
+ <div class="grid">${list.map(p=>{const [c,st,city,ty,name,desc,cost,kind,q]=p;return `<article class="card"><div class="art">${art(kind,name)}</div><div class="body"><div class="meta"><span class="cc" style="background:${CC[c][1]}">${CC[c][0]}</span>${ty.split("").map(t=>`<span class="pill">${TYPES[t]}</span>`).join("")}</div><h3>${esc(name)}</h3><div class="mute" style="font-size:13px">${esc(city)}</div><p class="d">${esc(desc)}</p><div class="cost">${esc(cost)}</div><div class="links"><a class="btn" href="${gimg(q)}" target="_blank" rel="noopener">Фото</a><a class="btn" href="${gmap(q)}" target="_blank" rel="noopener">Карта</a></div></div></article>`}).join("")||'<p class="mute">Нет мест с таким сочетанием. Сбросьте один из фильтров.</p>'}</div>`;
+ $("#t-places").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.c!==undefined&&b.closest("#fc")){PF.c=b.dataset.c;PF.st=""}else if(b.dataset.t!==undefined&&b.closest("#ft"))PF.t=b.dataset.t;else if(b.dataset.clr){PF.st=""}else return;renderPlaces()}
+}
+/* ---------- походы с трекером ---------- */
+function renderHikes(){
+ $("#t-hikes").innerHTML=`<div><h2>Походы и маршруты на день</h2><p class="lead">Десять маршрутов на целый день. Отмечайте пройденные точки: прогресс сохраняется для вас обоих, если страница открыта с правом редактирования, иначе только на этом устройстве.</p></div><div class="panel"><div class="kv" id="ov"></div><div class="bar"><i id="ovb"></i></div></div>`+
+ H.map(h=>`<details class="hike" id="h-${h.id}"><summary><div class="art">${art(h.kind,h.title)}</div><div class="hd"><div class="meta" style="display:flex;gap:6px;flex-wrap:wrap"><span class="cc" style="background:${CC[h.c][1]};width:max-content">${CC[h.c][0]}</span></div><h3>${esc(h.title)}</h3><div class="kv"><span>${esc(h.dist)}</span><span>${esc(h.time)}</span><span>набор ${esc(h.gain)}</span><span>${esc(h.lvl)}</span></div><div class="bar"><i data-b="${h.id}"></i></div></div></summary><div class="in"><p class="note">${esc(h.where)}. ${esc(h.note)}</p><ul class="steps">${h.steps.map((s,i)=>{const k=h.id+"_"+i;return `<li data-k="${k}"><input type="checkbox" id="c_${k}" ${S.checks[k]?"checked":""} aria-label="${esc(s[0])}"><label for="c_${k}" class="t"><b>${esc(s[0])}</b><br><span class="mute">${esc(s[1])}</span></label><span class="km">${esc(s[2])}</span></li>`}).join("")}</ul><div class="links"><a class="btn" href="${gmap(h.where+" "+h.title)}" target="_blank" rel="noopener">Карта</a><a class="btn" href="${gimg(h.title)}" target="_blank" rel="noopener">Фото</a></div></div></details>`).join("");
+ $("#t-hikes").onchange=e=>{const i=e.target.closest("input[type=checkbox]");if(!i)return;const k=i.closest("li").dataset.k;S.checks[k]=i.checked;save("checks",k,i.checked);updateHikes()};
+ updateHikes();
+}
+function updateHikes(){let all=0,done=0;H.forEach(h=>{let d=0;h.steps.forEach((s,i)=>{const k=h.id+"_"+i,v=!!S.checks[k];const li=document.querySelector(`li[data-k="${k}"]`);if(li){li.classList.toggle("done",v);const cb=li.querySelector("input");if(cb&&cb.checked!==v)cb.checked=v}if(v)d++});all+=h.steps.length;done+=d;const b=document.querySelector(`[data-b="${h.id}"]`);if(b)b.style.width=(100*d/h.steps.length)+"%"});const o=$("#ov");if(o){o.innerHTML=`<span>пройдено ${done} из ${all} точек</span><span>маршрутов закончено: ${H.filter(h=>h.steps.every((s,i)=>S.checks[h.id+"_"+i])).length} из ${H.length}</span>`;$("#ovb").style.width=(100*done/all)+"%"}}
+/* ---------- бюджет ---------- */
+function calc(){const o=S.opts,m=MULT[o.sc];const rows=B.filter(x=>!(x.flag==="pe"&&!o.pe)&&!(x.flag==="nope"&&o.pe)).map(x=>({...x,v:x.b*m[x.cat]}));
+ const tot=rows.reduce((a,x)=>a+x.v,0);return {rows,tot}}
+function renderBudget(){
+ const o=S.opts,{rows,tot}=calc(),rate=+o.rate||RATE0,tI=tot*rate,lo=50000,hi=60000;
+ const bycat={};rows.forEach(r=>bycat[r.cat]=(bycat[r.cat]||0)+r.v);
+ const act=Object.values(S.actuals).reduce((a,v)=>a+(+v||0),0);
+ const status=tI<=lo?"ниже вилки, остаётся запас":tI<=hi?"в вилке "+nf.format(lo)+"–"+nf.format(hi)+" ₪":"выше вилки на "+ils(tI-hi);
+ const max=Math.max(hi*1.15,tI*1.05);
+ let body="";const stages=Object.keys(BS);
+ stages.forEach(s=>{const rs=rows.filter(r=>r.s===s);if(!rs.length)return;const sub=rs.reduce((a,r)=>a+r.v,0);
+  body+=`<tr class="sub"><td>${BS[s]}</td><td class="ty"></td><td class="n">${usd(sub)}</td><td class="n">${ils(sub*rate)}</td><td class="n"></td></tr>`;
+  rs.forEach(r=>body+=`<tr><td>${esc(r.l)}<div class="note">${esc(r.note||"")}</div></td><td class="ty"><span class="pill">${BC[r.cat]}</span></td><td class="n">${usd(r.v)}</td><td class="n">${ils(r.v*rate)}</td><td class="n"><input type="number" min="0" step="10" data-a="${r.id}" aria-label="Факт, ₪, ${esc(r.l)}" value="${S.actuals[r.id]??""}" placeholder="—"></td></tr>`)});
+const stageSum=Object.keys(BS).map(s=>({s,n:BS[s],v:rows.filter(r=>r.s===s).reduce((a,r)=>a+r.v,0)})).filter(x=>x.v>0);
+ const topv=Math.max(...stageSum.map(x=>x.v));
+ const where=`<div class="panel"><h3 style="margin:0">Куда уходят деньги</h3><div class="mute" style="font-size:13px">По этапам и по статьям. Перелёты выделены отдельно, внутри этапов только то, что тратится на месте.</div>${stageSum.map(x=>`<div class="wrow"><span>${esc(x.n)}</span><div class="bar"><i style="width:${x.v/topv*100}%;background:${x.s==="fl"?BCC.fl:"var(--ok)"}"></i></div><b>${ils(x.v*rate)}</b><span class="mute">${Math.round(x.v/tot*100)}%</span></div>`).join("")}</div>`;
+ const hint=tI>hi?`<div class="tip">Базовый сценарий выходит выше вилки на ${ils(tI-hi)} из-за свежих цен на перелёты. Чтобы уложиться в 60 000 ₪: выберите «Экономно» (жильё и еда на ступень дешевле), отключите Перу или возьмите билеты на межконтинентальные рейсы за 4–6 месяцев по акциям.</div>`:"";
+ const peNote=o.pe?"":`<div class="tip">Перу выключено: свободны 12 дней. Добавьте их к времени у тёти или в Аргентине, например Патагонию, и следите за прилётом в Кито 20 июля.</div>`;
+ $("#t-budget").innerHTML=`<div><h2>Бюджет на двоих</h2><p class="lead">Ваш ориентир — 50–60 тысяч ₪ на всё. Курс ${rate.toString().replace(".",",")} ₪ за доллар (на 18 октября 2026), его можно поменять. Все суммы — за двоих, оценки из открытых источников и моего опыта, не предложение авиакомпаний.</p></div>
+ <div class="panel"><div class="controls"><label>Сценарий <select id="sc"><option value="e"${o.sc==="e"?" selected":""}>Экономно</option><option value="b"${o.sc==="b"?" selected":""}>Базовый</option><option value="c"${o.sc==="c"?" selected":""}>Комфортно</option></select></label><label><input type="checkbox" id="pe"${o.pe?" checked":""}> Перу</label><label>Курс <input type="number" id="rate" step="0.01" min="2" max="6" value="${rate}" style="width:90px"></label></div>
+ <div><div class="big">${ils(tI)}</div><div class="mute" style="margin-top:6px">${status}. В среднем ${ils(tI/94)} в день, около ${usd(tot/94)}.</div></div>
+ <div><div class="band"><div class="ok" style="left:${lo/max*100}%;width:${(hi-lo)/max*100}%"></div><div class="val" style="width:${Math.min(100,tI/max*100)}%"></div></div><div class="bandlbl"><span>0</span><span>${nf.format(lo)}</span><span>${nf.format(hi)} ₪</span></div></div>
+ <div><div class="stack">${Object.entries(bycat).map(([k,v])=>`<i style="width:${v/tot*100}%;background:${BCC[k]}" title="${BC[k]}"></i>`).join("")}</div><div class="sw" style="margin-top:8px">${Object.entries(bycat).map(([k,v])=>`<span><i class="dot" style="background:${BCC[k]}"></i>${BC[k]} ${ils(v*rate)} (${Math.round(v/tot*100)}%)</span>`).join("")}</div></div></div>${hint}${peNote}${where}
+ <div class="tw"><table><thead><tr><th>Статья</th><th class="ty">Тип</th><th class="n">$</th><th class="n">₪</th><th class="n">Факт, ₪</th></tr></thead><tbody>${body}<tr class="sub"><td>Итого</td><td class="ty"></td><td class="n">${usd(tot)}</td><td class="n">${ils(tI)}</td><td class="n">${act?ils(act):"—"}</td></tr></tbody></table></div>
+ <div class="two"><div class="tip"><b>Где сэкономить.</b> Вылетайте в будни и покупайте билеты за 4–6 месяцев. Берите обед дня за $3–5 в Боливии, Перу и Эквадоре. Туры на Галапагосах бронируйте на месте у местных гидов, семья подскажет. Если Universal хватит одного дня, это экономит около 350 ₪.</div><div class="tip"><b>Где не экономить.</b> Страховка с покрытием высоты и эвакуации, жильё в Биг-Суре на выходные Memorial Day и запас по времени на 22 августа. Сбой пересадки в Эквадоре — дороже любой скидки.</div></div>
+ <p class="note">В колонке «Факт» записывайте реальные траты по статьям, итоги сохраняются у вас. Цены на авиабилеты, отели и входные билеты меняются, особенно на Мачу-Пикчу и в Биг-Суре.</p>`;
+ $("#sc").onchange=e=>{S.opts.sc=e.target.value;save("opts","sc",S.opts.sc);renderBudget()};
+ $("#pe").onchange=e=>{S.opts.pe=e.target.checked;save("opts","pe",S.opts.pe);renderBudget()};
+ $("#rate").onchange=e=>{S.opts.rate=+e.target.value||RATE0;save("opts","rate",S.opts.rate);renderBudget()};
+ $("#t-budget").onchange=e=>{const i=e.target.closest("[data-a]");if(!i)return;const v=i.value===""?null:+i.value;S.actuals[i.dataset.a]=v;save("actuals",i.dataset.a,v);renderBudget()};
+}
+/* ---------- отели ---------- */
+function renderHotels(){const rate=+S.opts.rate||RATE0;
+ $("#t-hotels").innerHTML=`<div><h2>Отели и жильё</h2><p class="lead">Цены за ночь для двоих. Названия — примеры из знакомых мест, сверяйте наличие и цену на Booking, Airbnb и Google Hotels: отели закрываются, цены сезонные. Дома у тёти и у семьи на Галапагосах бесплатно.</p></div>`+
+ HT.map(h=>{const x=stageOf(h.s);return `<div class="stage" style="--c:${CC[x.c][1]}"><div class="row"><h3>${esc(x.name)}</h3><span class="pill">${h.n} ноч.</span></div><p class="mute">${esc(h.w)}</p><div class="tw"><table><thead><tr><th>Вариант</th><th>Тип</th><th class="n">$ за ночь</th><th class="n">₪ за ночь</th></tr></thead><tbody>${h.o.map(o=>`<tr><td>${esc(o[0])}</td><td><span class="pill">${o[1]}</span></td><td class="n">${o[3]?o[2]+"–"+o[3]:"—"}</td><td class="n">${o[3]?nf.format(Math.round(o[2]*rate/10)*10)+"–"+nf.format(Math.round(o[3]*rate/10)*10):"—"}</td></tr>`).join("")}</tbody></table></div></div>`}).join("")+`<div class="tip"><b>Совет.</b> Бесплатная отмена на всё, где можно: из-за блокад в Боливии и погодных закрытий дорог в Биг-Суре и Йосемити планы иногда меняются. Тёплая одежда нужна даже в хостелах высокогорья: отопления там часто нет.</div>`}
+/* ---------- перелёты ---------- */
+function renderFlights(){const rate=+S.opts.rate||RATE0;let lo=0,hi=0;FL.forEach(f=>{if(f[7]){lo+=f[4]*2;hi+=f[5]*2}});
+ const fb=calc().rows.filter(r=>r.cat==="fl").reduce((a,r)=>a+r.v,0);
+ $("#t-flights").innerHTML=`<div><h2>Перелёты и переезды</h2><p class="lead">Вылет из Тель-Авива. Цены за одного человека в долларах с одним чемоданом 23 кг и ручной кладью, справа за двоих в шекелях. Это диапазоны по агрегаторам (Expedia, Kayak, Skyscanner, Travelocity): они показывают цены, найденные пользователями в последние дни, в основном на осенние даты. На май–август 2027 живых цен пока мало, а июль–август дороже. Перед покупкой смотрите Google Flights и сайты авиакомпаний.</p></div>
+ ${FL.map(f=>{const pr=f[5]?`<div class="fp"><b>$${f[4]}–${f[5]}</b> с человека <span class="mute">·</span> <b>${nf.format(Math.round(f[4]*2*rate/10)*10)}–${nf.format(Math.round(f[5]*2*rate/10)*10)} ₪</b> на двоих</div>`:"";return `<div class="stage" style="--c:${f[7]?"var(--accent)":"var(--line)"}"><div class="row"><h3>${esc(f[1])}</h3><span class="pill">${esc(f[0])}</span></div><div class="kv"><span>${esc(f[2])}</span><span>${esc(f[3])}</span></div>${pr}${f[6]?`<p class="note">${esc(f[6])}</p>`:""}</div>`}).join("")}
+ <div class="panel"><b>Итого в строках «Перелёты» бюджета, на двоих: ${ils(lo*rate)} – ${ils(hi*rate)}</b><div class="mute" style="font-size:13px">Вместе с автобусами Перу. Серым выделены переезды, которые уже входят в другие статьи.</div></div>
+ <div class="tip">В базовом сценарии на перелёты заложено около ${ils(fb*rate)} за двоих, то есть середина диапазона. Билеты через океан ищите за 4–6 месяцев, внутренние в Аргентине и Эквадоре берите, когда уточните даты. Строки без цены включены в другие статьи: автобусы Боливии, поезд до Мачу-Пикчу, аренда машины.</div>
+ <div class="tip"><b>Багаж.</b> В расчёте один чемодан 23 кг на каждого. EL AL на тарифе Light его не включает, добавить стоит около $105. У Flybondi и JetSMART багаж всегда отдельно, у Aerolíneas на промо-тарифе только ручная кладь, и чемодан в Аргентине лимитирован 15 кг. На Галапагосы и обратно 23 кг плюс ручная кладь 8 кг. Если возьмёте один чемодан на двоих, перелёты станут заметно дешевле.</div>
+ <div><h2>Визы и документы</h2><p class="lead">Вы с израильским паспортом, у Пелега израильский, эквадорский и статус жителя Галапагосов. Ориентиры по открытым источникам, перед поездкой проверьте на сайтах МИД.</p></div>
+ ${VISA.map(v=>`<div class="stage" style="--c:var(--accent)"><div class="row"><h3>${esc(v[0])}</h3></div><p><b>Вы:</b> ${esc(v[1])}</p><p><b>Пелег:</b> ${esc(v[2])}</p><p class="note">${esc(v[3])}</p></div>`).join("")}
+ <div class="tip">Паспорта должны действовать не меньше 6 месяцев после последнего въезда. Для сухопутной границы Боливия — Перу нужны штампы в паспортах.</div>`}
+/* ---------- вещи ---------- */
+function renderPack(){
+ let n=0;
+ $("#t-pack").innerHTML=`<div><h2>Вещи по погоде</h2><p class="lead">Погода по этапам и список, что взять. Температуры — типичные для этих дат ориентиры, не прогноз: смотрите прогноз за неделю. Отмечайте собранное галочками, прогресс сохраняется.</p></div>
+ <div class="panel"><div class="kv" id="pov"></div><div class="bar"><i id="povb"></i></div></div>
+ ${WX.map(w=>`<div class="stage" style="--c:var(--accent)"><div class="row"><h3>${esc(w[0])}</h3><span class="pill">${esc(w[1])}</span></div><div class="kv"><span>днём ${esc(w[2])}</span><span>ночью ${esc(w[3])}</span></div><p>${esc(w[4])}</p><p class="note"><b>Надеть:</b> ${esc(w[5])}</p></div>`).join("")}
+ ${PKTIPS.map(t=>`<div class="tip">${esc(t)}</div>`).join("")}
+ ${PK.map(g=>`<details class="hike" open><summary><div class="hd"><h3>${esc(g.t)}</h3><div class="note">${esc(g.d)}</div></div></summary><div class="in"><ul class="steps">${g.i.map(x=>{const k="pk_"+(n++);return `<li data-k="${k}"><input type="checkbox" id="c_${k}" ${S.checks[k]?"checked":""} aria-label="${esc(x)}"><label for="c_${k}" class="t">${esc(x)}</label><span></span></li>`}).join("")}</ul></div></details>`).join("")}`;
+ $("#t-pack").onchange=e=>{const i=e.target.closest("input[type=checkbox]");if(!i)return;const k=i.closest("li").dataset.k;S.checks[k]=i.checked;save("checks",k,i.checked);updatePack()};
+ updatePack();
+}
+function updatePack(){let all=0,done=0;document.querySelectorAll("#t-pack li[data-k]").forEach(li=>{const v=!!S.checks[li.dataset.k];li.classList.toggle("done",v);const cb=li.querySelector("input");if(cb&&cb.checked!==v)cb.checked=v;all++;if(v)done++});const o=$("#pov");if(o){o.innerHTML=`<span>собрано ${done} из ${all}</span>`;$("#povb").style.width=(all?100*done/all:0)+"%"}}
+/* ---------- рядом ---------- */
+function renderNear(){$("#t-near").innerHTML=`<div><h2>Что ещё есть рядом</h2><p class="lead">Идеи, которые можно вставить в дни запаса или заменить ими другие точки. Время считается от города, указанного в строке.</p></div>`+
+ NR.map(n=>{const x=stageOf(n.s);return `<div class="stage" style="--c:${CC[x.c][1]}"><div class="row"><h3>${esc(n.t)}</h3></div><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))">${n.i.map(i=>`<div class="panel" style="padding:12px;gap:4px"><b>${esc(i[0])}</b><span class="pill" style="width:max-content">${esc(i[1])}</span><p style="font-size:14px">${esc(i[2])}</p><a class="btn" style="width:max-content;margin-top:4px" href="${gmap(i[0])}" target="_blank" rel="noopener">Карта</a></div>`).join("")}</div></div>`}).join("")}
+/* ---------- альбом ---------- */
+let AS=null;
+function renderPhotos(){
+ $("#t-photos").innerHTML=`<div><h2>Альбом поездки</h2><p class="lead">Загружайте сюда свои фото во время поездки. Они появятся у всех, кто открыл страницу. Загрузка доступна владельцу и редакторам страницы.</p></div><div class="panel" id="up"><div class="controls"><input type="file" id="pf" accept="image/*" multiple><select id="ps"><option value="">Этап</option>${ST.filter(x=>!x.free).map(x=>`<option>${esc(x.name)}</option>`).join("")}</select><input type="text" id="pc" placeholder="Подпись" style="min-width:160px"><button class="btn p" type="button" id="pu">Загрузить</button></div><div class="note" id="pm"></div></div><div class="photos" id="pg"><p class="mute">Пока нет ни одной фотографии. После первой загрузки здесь появится сетка.</p></div>`;
+ const up=$("#up");
+ (async()=>{try{AS=await window.claude?.use?.("assets")}catch(e){}if(!AS||!S.db){$("#pm").textContent="Загрузка сейчас недоступна: откройте страницу владельцем или редактором.";$("#pu").disabled=true;$("#pf").disabled=true}})();
+ $("#pu").onclick=async()=>{const fs=[...$("#pf").files];if(!fs.length){$("#pm").textContent="Выберите хотя бы один файл.";return}
+  $("#pu").disabled=true;let n=0;
+  for(const f of fs){try{$("#pm").textContent="Загружаю "+(++n)+" из "+fs.length+"…";const blob=await shrink(f);const r=await AS.upload(blob,{type:"image/jpeg"});await S.db.collection("photos").add({aid:r.id,cap:$("#pc").value.slice(0,140),st:$("#ps").value,ts:Date.now()})}catch(e){$("#pm").textContent="Не получилось: "+(e&&e.code||"ошибка")+". Попробуйте файл поменьше.";$("#pu").disabled=false;return}}
+  $("#pm").textContent="Готово.";$("#pf").value="";$("#pc").value="";$("#pu").disabled=false}
+ drawPhotos(PH)}
+function shrink(file){return new Promise((res,rej)=>{const im=new Image(),u=URL.createObjectURL(file);im.onload=()=>{const k=Math.min(1,1600/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?res(b):rej(new Error("x")),"image/jpeg",.84)};im.onerror=()=>rej(new Error("img"));im.src=u})}
+let PH=[];
+function drawPhotos(list){const g=$("#pg");if(!g||!list.length)return;g.innerHTML=list.map(p=>`<figure><img loading="lazy" src="/_blob/${esc(p.aid)}" alt="${esc(p.cap||"Фото из поездки")}"><figcaption>${esc(p.cap||"")}${p.st?`<div class="note">${esc(p.st)}</div>`:""}</figcaption></figure>`).join("")}
+function subPhotos(db){try{db.collection("photos").orderBy("ts","desc").limit(200).onSnapshot(s=>{PH=s.docs.map(d=>d.data());drawPhotos(PH)},()=>{})}catch(e){}}
+/* ---------- тема и запуск ---------- */
+function theme(){const b=$("#theme");let t=LS.get("theme")||"auto";const ap=()=>{const r=document.documentElement;if(t==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",t);b.textContent=t==="auto"?"Тема: авто":t==="dark"?"Тема: тёмная":"Тема: светлая"};ap();b.onclick=()=>{t=t==="auto"?"dark":t==="dark"?"light":"auto";LS.set("theme",t);ap()}}
+tabs();header();theme();renderRoute();renderPlaces();renderHikes();renderBudget();renderHotels();renderFlights();renderPack();renderNear();renderPhotos();
+{const h=(location.hash||"").slice(1);go(TABS.some(t=>t[0]===h)?h:(LS.get("tab")||"route"))}
+initDb();
+</script>
